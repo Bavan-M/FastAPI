@@ -85,37 +85,6 @@ async def search(query:str):
     return {"query":query,"result":[],"message":"this endpoint is deprecated"}
 
 
-def retry(times:int=3,delay:float=1.0,exceptions:tuple=(Exception,)):
-    def decorator(func):
-        @functools.wraps(func)
-        async def wrapper(*args,**kwargs):
-                last_exception=None
-                for attempt in range(1,times+1):
-                    try:
-                        print(f"[RETRY] Attempt {attempt}/{times} for {func.__name__}:{args}:{kwargs}")
-                        return await func(*args,**kwargs)
-                    except exceptions as e:
-                        last_exception=e
-                        print(f"[RETRY] Attempt {attempt} failes {last_exception}:{args}:{kwargs}")
-                        if attempt<times:
-                            await asyncio.sleep(delay)
-                raise HTTPException(status_code=503,detail=f"Service failed after {times} attempt:{last_exception} ")
-        return wrapper
-    return decorator
-
-
-call_count=0
-
-@app.get("/llm/generate")
-@retry(times=3,delay=2,exceptions=(ConnectionError,))
-async def call_llm(prompt:str):
-    global call_count
-    call_count+=1
-    if call_count<3:
-        raise ConnectionError("LLM API temporarily unavalialble")
-    call_count=0
-    return {"prompt":prompt,"response":"here is the LLM response"}
-
 
 
         
