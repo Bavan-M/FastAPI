@@ -32,7 +32,7 @@ class DocumentResponse(DocumentBase):
     '''Document response will have id,title,content,category as optional ,created by and created at'''
     id:int
     category:Optional[str]=None
-    creatd_by:str
+    created_by:str
     created_at:datetime=Field(default_factory=datetime.now)
 
 class LMMRequest(BaseModel):

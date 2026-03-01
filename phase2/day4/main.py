@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from phase2.day4.core.config import settings
-from phase2.day4.routers import users
+from phase2.day4.routers import users,document,llm
 
 app=FastAPI(
     title=settings.app_name,
@@ -19,6 +19,8 @@ app.add_middleware(
 )
 
 app.include_router(users.router,prefix=settings.api_prefix)
+app.include_router(document.router,prefix=settings.api_prefix)
+app.include_router(llm.router,prefix=settings.api_prefix)
 
 @app.get("/",tags=["Health"])
 def root():
