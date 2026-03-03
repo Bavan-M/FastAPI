@@ -11,7 +11,7 @@ app=FastAPI()
 class TimingMiddleware(BaseHTTPMiddleware):
     async def dispatch(self,request:Request,call_next):
         start=time.perf_counter()
-        response=await call_next(request)
+        response=await call_next(request) # ⬅️ This calls the next middleware/route
         duration=time.perf_counter()-start
         response.headers["X-Process-Time"]=f"{duration:.4f}s"
         print(f"[TIMING] {request.method}:{request.url.path}->{duration:.4f}s")
@@ -22,7 +22,7 @@ class RequestIDMiddleware(BaseHTTPMiddleware):
     async def dispatch(self,request:Request,call_next):
         request_id=request.headers.get("X-Request-ID",str(uuid.uuid4()))
         request.state.request_id=request_id
-        response=await call_next(request)
+        response=await call_next(request) # ⬅️ This calls the next middleware/route
         response.headers["X-Request-ID"]=request_id
         return response
     
@@ -30,7 +30,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):
     async def dispatch(self,request:Request,call_next):
         print(f"[REQUEST] {request.method}:{request.url}")
         print(f"[HEADERS] User-Agent :{request.headers.get('user-agent',"unknown")}")
-        response=await call_next(request)
+        response=await call_next(request) #  ⬅️ This calls the next middleware/route
         print(f"[RESPONSE] State: {response.status_code}")
         return response
 

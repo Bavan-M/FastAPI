@@ -1,0 +1,29 @@
+Why does structure matter?
+Right now all your routes are in one file. In a real Gen AI API you'll have:
+
+Auth routes (/login, /register, /refresh)
+User routes (/users/me, /users/{id})
+Document routes (/documents/upload, /documents/{id})
+LLM routes (/generate, /stream, /embeddings)
+Admin routes (/admin/stats, /admin/users)
+
+Putting all of this in one file becomes unmaintainable fast. APIRouter lets you split routes across files and mount them into your main app cleanly.
+
+
+phase2/
+└── day4/
+    ├── main.py                  ← app entry point
+    ├── routers/
+    │   ├── __init__.py
+    │   ├── users.py
+    │   ├── documents.py
+    │   └── llm.py
+    ├── models/
+    │   ├── __init__.py
+    │   └── schemas.py           ← all pydantic models
+    ├── dependencies/
+    │   ├── __init__.py
+    │   └── auth.py              ← reusable dependencies
+    └── core/
+        ├── __init__.py
+        └── config.py            ← app settings

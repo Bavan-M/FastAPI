@@ -1,0 +1,135 @@
+🗺️ The Complete FastAPI Map for a Gen AI Engineer
+
+Phase 1 — Foundations (4 days)
+
+Project setup, uvicorn, live reload
+Path, query, header, cookie parameters
+Pydantic models — request & response bodies
+Nested models, optional fields, field validators, model validators
+Status codes & response customization
+JSONResponse, HTMLResponse, PlainTextResponse
+APIRouter & clean project structure
+Auto docs — Swagger, ReDoc, customizing OpenAPI schema
+Mini Project: Notes API (CRUD, in-memory)
+
+
+Phase 2 — Intermediate Patterns (6 days)
+
+Dependency Injection with Depends — the most important concept
+Nested dependencies, dependency overriding (critical for testing)
+Reusable dependencies (pagination, filters, current user)
+Custom decorators — logging, timing, retry, auth guards
+Middleware — CORS, trusted hosts, request timing, custom middleware
+Background tasks with BackgroundTasks
+File uploads (single, multiple), form data, multipart
+Custom exception handlers, HTTPException, RequestValidationError
+Lifespan events — startup & shutdown (@asynccontextmanager)
+Mini Project: Secured Task Manager API
+
+
+Phase 3 — Authentication & Security (4 days)
+
+OAuth2 password flow + JWT access & refresh tokens
+Role-based access control (admin, user, guest)
+API key authentication (important for Gen AI APIs)
+OAuth2 with third-party (Google login)
+Scopes & permissions
+HTTPS, security headers, secrets management
+Brute force protection, token blacklisting
+Mini Project: Multi-role Auth System with API keys
+
+
+Phase 4 — Database Integration (6 days)
+
+SQLAlchemy async + Alembic migrations
+PostgreSQL with asyncpg
+Full async CRUD patterns + repository pattern
+Relationships — one-to-many, many-to-many
+Pagination, filtering, sorting at DB level
+MongoDB with Motor (great for storing chat history, documents)
+Redis — caching, rate limiting, session storage, pub/sub
+Connection pooling & DB performance basics
+Mini Project: Blog API with PostgreSQL + Redis cache
+
+
+Phase 5 — Streaming & Async (5 days) ⚡
+
+Deep dive into asyncio — gather, TaskGroup, Queue, Lock
+StreamingResponse — stream LLM tokens to the client
+Server-Sent Events (SSE) — real-time updates
+WebSockets — full bidirectional real-time communication
+WebSocket rooms, connection managers, broadcasting
+Long polling pattern
+Parallel async LLM calls — calling GPT-4 + Claude simultaneously
+Async HTTP client with httpx — calling external APIs
+Timeout handling, retry logic, circuit breaker pattern
+Mini Project: Real-time streaming chat with WebSocket + SSE
+
+
+Phase 6 — Production Readiness (6 days)
+
+Structured logging with loguru + request ID tracing
+Testing — pytest, httpx, AsyncClient, mocking dependencies
+Integration tests, test coverage
+pydantic-settings — environment & config management
+Dockerizing FastAPI — multi-stage builds
+Docker Compose — FastAPI + Postgres + Redis + Nginx
+Rate limiting with slowapi
+Health check, readiness, liveness endpoints
+OpenTelemetry — distributed tracing, metrics
+API versioning strategies (/v1, /v2)
+Caching strategies — response cache, query cache
+Graceful shutdown handling
+Mini Project: Fully production-ready dockerized API
+
+
+Phase 7 — Gen AI Specific Patterns (8 days) 🤖
+
+Integrating OpenAI, Anthropic, Gemini async clients
+Building an LLM gateway/proxy API
+Streaming completions through your API layer (token by token)
+Prompt template management as API endpoints
+Multi-turn conversation management + memory
+Async RAG pipeline — upload → chunk → embed → store → retrieve
+Vector DB integration — Qdrant, Chroma, Weaviate async clients
+Hybrid search (vector + keyword)
+Reranking pipeline as an API
+Tool calling / function calling endpoints
+Agent webhook endpoints (LangGraph, CrewAI callbacks)
+File ingestion pipeline (PDF, DOCX, URLs)
+Token counting & cost tracking middleware
+Guardrails & content moderation middleware
+Multi-modal inputs (image + text requests)
+Mini Project: Full RAG API with streaming, auth, rate limiting
+
+
+Phase 8 — Microservices (7 days) 🏗️
+
+Microservice architecture principles — when to split, when not to
+Service-to-service communication with async httpx
+Async message queues — RabbitMQ & Celery with FastAPI
+Event-driven architecture with Kafka basics
+API Gateway pattern — single entry point, routing, auth
+Inter-service JWT auth
+Service discovery basics
+gRPC with FastAPI (high-performance service communication)
+Distributed tracing across services
+Multi-service Docker Compose
+Strangler fig pattern — migrating a monolith
+Mini Project: Split the RAG API into microservices — Auth Service, Ingestion Service, Retrieval Service, LLM Gateway, API Gateway
+
+
+Phase 9 — Advanced & Expert Level (5 days)
+
+Custom OpenAPI schema generation
+Plugin & extension architecture for your API
+Multi-tenancy patterns (one API, many clients/orgs)
+Async task queues with arq or dramatiq
+GraphQL with Strawberry + FastAPI
+Server-side caching with ETags & conditional requests
+Advanced Pydantic v2 — custom serializers, computed fields, discriminated unions
+Writing reusable FastAPI plugins/packages
+Performance profiling & bottleneck analysis
+Load testing with locust
+Zero-downtime deployments
+Final Capstone: Production Gen AI Platform — multi-tenant, microservices, streaming RAG, auth, monitoring, fully tested, fully dockerized

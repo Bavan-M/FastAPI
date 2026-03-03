@@ -1,0 +1,9 @@
+Why is this the most important concept in FastAPI?
+Dependency Injection (DI) is how FastAPI handles shared logic across routes — things like getting the current user, 
+validating an API key, pagination params, DB sessions, and more. Instead of copy-pasting logic into every route, you define it once and FastAPI injects it automatically.
+In Gen AI projects you'll use this for:
+
+Injecting the current authenticated user into every protected route
+Injecting a DB session into routes that need it
+Injecting LLM client instances
+Validating API keys on every request

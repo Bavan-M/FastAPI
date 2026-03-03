@@ -1,0 +1,12 @@
+What are decorators and why do they matter?
+A decorator is a function that wraps another function to add behavior before or after it runs — without touching the original function's code. 
+You've already used them: @app.get("/") is a decorator.
+In production Gen AI APIs you'll use custom decorators for:
+
+Logging every request + execution time
+Enforcing roles (@require_role("admin"))
+Retrying flaky LLM API calls (@retry(times=3))
+Caching responses (@cache(ttl=60))
+Deprecation warnings on old endpoints
+
+The key challenge in FastAPI is making decorators work correctly with async functions — that's what today focuses on.

@@ -1,0 +1,18 @@
+What is Middleware and how is it different from Decorators?
+            Decorator               Middleware
+Scope       One specific route      Every single request
+Use case    Route-level logic       App-wide logic
+Example     @require_role("admin")  Log all requests
+
+Middleware sits between the incoming request and your routes — every request passes through it before hitting any route, 
+and every response passes back through it before going to the client.
+
+Client → Middleware 1 → Middleware 2 → Route Handler → Middleware 2 → Middleware 1 → Client
+
+In Gen AI APIs you'll use middleware for:
+
+CORS (allowing your frontend to call your API)
+Injecting a unique request ID for tracing
+Global request/response logging
+Auth token validation globally
+Response compression

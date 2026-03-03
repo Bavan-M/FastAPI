@@ -1,0 +1,801 @@
+1. What is the difference between deep learning and traditional machine learning?  
+Deep learning uses multi-layer neural networks that automatically learn features from raw data, especially unstructured data like images, audio, and text. Traditional machine learning usually uses shallower models (e.g., linear models, trees) and relies on manual feature engineering on structured data. Deep learning generally needs much more data and compute but often achieves higher accuracy on complex tasks.[1][2]
+
+***
+
+2. What is a perceptron? What is its main limitation?  
+A perceptron is the simplest artificial neuron: it takes weighted inputs, adds a bias, applies a step activation, and outputs 0 or 1. Its main limitation is that it can only represent linearly separable problems, so it cannot solve tasks like XOR.[3]
+
+***
+
+3. What is a neuron in the context of a neural network? What are its components (inputs, weights, bias, activation function)?  
+A neuron computes a weighted sum of its inputs, adds a bias term, and passes the result through an activation function. Inputs are numeric values, weights scale each input, the bias shifts the sum, and the activation function applies a (usually non-linear) transformation to produce the output.[3]
+
+***
+
+4. Why are activation functions necessary in a neural network? What would happen if you only used linear activation functions?  
+Activation functions introduce **non-linearity**, allowing the network to model complex relationships beyond simple linear mappings. If only linear activations were used, any number of layers would collapse to an overall linear function, making depth useless for complex tasks.[3]
+
+***
+
+5. Explain the Sigmoid activation function. What are its main drawbacks (e.g., vanishing gradients, not zero-centered)?  
+The Sigmoid function maps real values to \((0, 1)\), often interpreted as probabilities in binary classification. Its drawbacks include vanishing gradients for large positive/negative inputs and outputs that are not zero-centered, which can cause inefficient gradient updates.[3]
+
+***
+
+6. Explain the Tanh activation function. How is it an improvement over Sigmoid?  
+Tanh maps inputs to \((-1, 1)\), making outputs zero-centered, which helps gradients flow more symmetrically and can speed up training. It still suffers from vanishing gradients at large magnitudes, but its centered output often makes optimization easier than Sigmoid.[3]
+
+***
+
+7. Explain the ReLU (Rectified Linear Unit) activation function. What are its advantages?  
+ReLU outputs 0 for negative inputs and the input itself for positive inputs, \(f(x)=\max(0,x)\). It is simple to compute, helps reduce vanishing gradients for positive values, and produces sparse activations that can improve efficiency and generalization.[3]
+
+***
+
+8. What is the "dying ReLU" problem?  
+The “dying ReLU” problem occurs when many neurons output 0 for all inputs because their weights cause the pre-activation to be always negative. These neurons receive zero gradient and effectively stop learning, reducing network capacity.[3]
+
+***
+
+9. Name and explain some variants of ReLU that address this problem (e.g., Leaky ReLU, Parametric ReLU, ELU).  
+Leaky ReLU uses a small negative slope (e.g., 0.01x for \(x<0\)) so gradients still flow for negative inputs. Parametric ReLU (PReLU) makes that negative slope a learned parameter, and ELU uses an exponential form for negative inputs to allow negative outputs and often faster, more stable learning.[3]
+
+***
+
+10. What is the Softmax activation function and where is it typically used?  
+Softmax converts a vector of real scores into a probability distribution over classes by exponentiating and normalizing them. It is typically used in the final layer of multi-class classification networks to output class probabilities.[3]
+
+***
+
+11. What is the difference between a hidden layer and an output layer?  
+Hidden layers sit between input and output and transform representations internally without being directly supervised by labels. The output layer produces the final predictions (e.g., probabilities or regression values) that correspond to the task.[3]
+
+***
+
+12. How do you decide on the number of hidden layers and neurons in a neural network?  
+There is no fixed formula; choices are made via experimentation, validation performance, and practical heuristics. Common practice is to start with architectures known to work for the domain, then adjust layers and neurons using validation performance and regularization to avoid overfitting.[1]
+
+***
+
+13. What is a "deep" neural network? What is the main benefit of depth?  
+A “deep” network has multiple hidden layers, often three or more. Greater depth lets the model build hierarchical features (e.g., edges → shapes → objects) and represent very complex functions with fewer neurons than a very wide shallow network.[1]
+
+***
+
+14. What are weights and biases in a neural network? How are they initialized?  
+Weights are parameters that scale inputs; biases shift the activation threshold of neurons. They are usually initialized randomly using schemes like Xavier/Glorot or He initialization to keep activations and gradients at reasonable scales across layers.[3]
+
+***
+
+15. Why is random initialization of weights important? What happens if you initialize all weights to zero?  
+Random initialization breaks symmetry so different neurons learn different features instead of remaining identical. If all weights are initialized to zero, every neuron in a layer receives the same gradients and stays identical, preventing the network from learning rich representations.[3]
+
+***
+
+16. What is a universal approximation theorem? What does it imply?  
+The theorem states that a feedforward network with at least one hidden layer and enough neurons can approximate any continuous function on a compact domain, under mild conditions. It implies neural networks are very expressive, though it does not guarantee easy training or good generalization.[3]
+
+***
+
+17. What is the difference between a feedforward neural network and a recurrent neural network?  
+Feedforward networks pass information strictly from input to output with no cycles and usually assume independent inputs. Recurrent neural networks have loops that allow them to maintain hidden state and model sequences where current outputs depend on previous inputs.[3]
+
+***
+
+18. How do you represent a single training example (e.g., an image or a sentence) as input to a neural network?  
+Inputs are encoded as numeric arrays or tensors. For example, images are 3D arrays (height × width × channels), text is sequences of token indices or embeddings, and tabular data is a feature vector of numerical/encoded values.[3]
+
+***
+
+19. What is a tensor? Why is it the fundamental data structure in deep learning frameworks like TensorFlow and PyTorch?  
+A tensor is a generalization of scalars (0D), vectors (1D), and matrices (2D) to higher-dimensional arrays. It is fundamental because it compactly stores multi-dimensional data and supports efficient operations and automatic differentiation on hardware accelerators.[3]
+
+***
+
+20. Explain the concept of a computational graph.  
+A computational graph is a directed graph where nodes represent operations or variables and edges represent data flow. It enables automatic differentiation: by traversing the graph backward, gradients for all parameters can be computed efficiently (backpropagation).[3]
+
+***
+
+21. What is the difference between a parameter and a hyperparameter in a deep learning model?  
+Parameters are learned values inside the model, such as weights and biases, updated during training. Hyperparameters are set by the practitioner (e.g., learning rate, batch size, number of layers) and tuned using validation data rather than learned directly.[3]
+
+***
+
+22. What is He initialization? When is it preferred over Xavier/Glorot initialization?  
+He initialization sets weights with variance scaled by approximately \(2/\text{fan\_in}\) to keep activations stable in networks using ReLU-like activations. It is preferred over Xavier/Glorot when the network uses ReLU or its variants, because those activations zero-out negatives and He’s scaling better preserves variance.[3]
+
+***
+
+23. What is the purpose of the bias term?  
+The bias allows a neuron to shift its activation function left or right, effectively learning an intercept independent of the inputs. Without biases, all learned functions would be constrained to pass through the origin, limiting representational power.[3]
+
+***
+
+24. How would you explain the concept of a neural network to a 5-year-old?  
+A neural network is like a big group of **friends** passing messages: each friend looks at some numbers, changes them a bit, and passes them on. After lots of practice with examples, the group learns to answer questions like “Is this a cat picture?” correctly most of the time.[3]
+
+***
+
+25. What is weight decay? How does it relate to L2 regularization?  
+Weight decay is a technique that shrinks weights a little on each update, penalizing large values. In many optimizers, this behaves like L2 regularization, which adds a term proportional to the squared weights to the loss to reduce overfitting.[3]
+
+26. What is a loss function (or cost function)? What is its purpose?  
+A loss function measures how far off a model's predictions are from the true labels, quantifying prediction error. Its purpose is to provide a single scalar value that optimization algorithms minimize to improve model performance during training.[1]
+
+***
+
+27. What is Mean Squared Error (MSE) loss? When is it used?  
+MSE computes the average of squared differences between predicted and actual values: \(\frac{1}{n}\sum (y_i - \hat{y_i})^2\).  It is used primarily for regression tasks where the goal is to predict continuous values, as it penalizes larger errors more heavily.[1]
+
+***
+
+28. What is Cross-Entropy loss? Explain binary cross-entropy and categorical cross-entropy.  
+Cross-entropy measures the difference between predicted probability distributions and true distributions. Binary cross-entropy is for two-class problems: \(-[y\log(\hat{y}) + (1-y)\log(1-\hat{y})]\); categorical uses softmax for multi-class: \(-\sum y_i \log(\hat{y_i})\).[1]
+
+***
+
+29. Why is cross-entropy preferred over MSE for classification tasks?  
+Cross-entropy aligns better with probabilistic outputs from softmax/sigmoid, penalizing confident wrong predictions more effectively. MSE treats outputs as continuous values, leading to slower learning and less intuitive gradients for classification probabilities.[2]
+
+***
+
+30. What is Gradient Descent? Explain the core idea intuitively.  
+Gradient descent updates model parameters by stepping in the direction opposite to the gradient of the loss function. Intuitively, it rolls a ball downhill on the loss surface, taking small steps proportional to the slope to reach a minimum.[3]
+
+***
+
+31. What is a learning rate? What happens if the learning rate is too high? Too low?  
+The learning rate controls step size in parameter updates during optimization. Too high causes overshooting minima and divergence; too low leads to slow convergence or getting stuck.[4]
+
+***
+
+32. Explain the difference between Batch Gradient Descent, Stochastic Gradient Descent (SGD), and Mini-Batch Gradient Descent. What are the pros and cons of each?  
+- Batch GD: uses entire dataset per update (accurate but slow, memory-intensive).[3]
+- SGD: one example per update (fast, noisy updates, good generalization).[3]
+- Mini-batch: small subsets (balances speed/accuracy, GPU-friendly, standard in practice).[3]
+
+***
+
+33. What is the concept of a "local minimum"? Is this a major problem in modern deep learning?  
+A local minimum is a point where the loss gradient is zero but not the global lowest value. It is not a major problem in modern deep learning due to high-dimensional spaces favoring flat minima and good initializations/optimizers escaping them.[4]
+
+***
+
+34. What is a saddle point? Why is it a more common problem than local minima in high-dimensional spaces?  
+A saddle point has zero gradient but is neither minimum nor maximum (curves up in some directions, down in others). In high dimensions, saddles vastly outnumber local minima, stalling optimization until momentum escapes them.[5]
+
+***
+
+35. What is Backpropagation? Explain it at a high level.  
+Backpropagation computes gradients of the loss with respect to all parameters by applying the chain rule from output back to input layers. It enables efficient training of deep networks by reusing intermediate computations in a forward-backward pass.[6][5]
+
+***
+
+36. What is the chain rule and why is it fundamental to backpropagation?  
+The chain rule states \(\frac{d}{dx}f(g(x)) = f'(g(x)) \cdot g'(x)\), allowing gradient decomposition across composed functions. It is fundamental because neural networks are compositions of layers, so backprop multiplies local gradients layer-by-layer.[5][6]
+
+***
+
+37. What are vanishing gradients and exploding gradients?  
+Vanishing gradients occur when gradients shrink exponentially through layers, stalling early-layer learning. Exploding gradients grow exponentially, causing unstable large updates and divergence.[5]
+
+***
+
+38. What are some techniques to mitigate the vanishing/exploding gradient problem? (e.g., gradient clipping, residual connections, proper initialization).  
+- Gradient clipping caps gradient norms to prevent explosions.[4]
+- Better activations (ReLU), initialization (Xavier/He), and residuals (skip connections) maintain gradient flow.[5]
+- Batch/Layer normalization stabilizes activations.[5]
+
+***
+
+39. What is momentum in the context of optimization? How does it help?  
+Momentum accumulates velocity from past gradients, like a ball gaining speed downhill. It accelerates through flat regions, dampens oscillations, and helps escape shallow local minima.[4]
+
+***
+
+40. What is a learning rate schedule (or learning rate decay)? Name a few common schedules.  
+A learning rate schedule reduces the rate over time to fine-tune convergence after initial fast progress. Common ones: step decay, exponential decay, cosine annealing.[4]
+
+***
+
+41. What is an optimizer?  
+An optimizer is an algorithm that adjusts parameters to minimize loss, extending basic gradient descent with accelerations and adaptations.[7]
+
+***
+
+42. Explain the AdaGrad optimizer. What is its main drawback?  
+AdaGrad adapts learning rates per-parameter by accumulating squared past gradients in the denominator, aiding sparse data. Its drawback: learning rate monotonically decreases to near-zero, stalling training on dense data.[8]
+
+***
+
+43. Explain the RMSprop optimizer. How does it improve upon AdaGrad?  
+RMSprop uses exponential moving average of squared gradients instead of sum, preventing aggressive decay. This keeps learning rates viable longer, enabling continued progress unlike AdaGrad.[8]
+
+***
+
+44. Explain the Adam optimizer. Why is it so popular?  
+Adam combines momentum (first moment of gradients) and RMSprop (second moment) with bias corrections for adaptive per-parameter rates. It is popular for fast, robust convergence across sparse/noisy problems with minimal tuning.[7][8]
+
+***
+
+45. What is the difference between a convex and non-convex optimization problem? Which category do neural networks fall into?  
+Convex problems have one global minimum with no local traps; non-convex have multiple, rugged landscapes. Neural networks are non-convex due to highly nonlinear layered compositions.[4]
+
+***
+
+46. What is an epoch, a batch, and an iteration?  
+An epoch is one full pass through the training dataset. A batch is a subset of data for one update; an iteration is one batch update.[9]
+
+***
+
+47. What is an objective function? How is it different from a loss function?  
+The objective function is what optimization minimizes (often loss + regularization); loss measures per-example/prediction error. Objective encompasses total training goal, while loss is its core component.[1]
+
+***
+
+48. Explain the difference between `model.train()` and `model.eval()` in PyTorch.  
+`model.train()` enables training behaviors like dropout/batchnorm updating statistics. `model.eval()` switches to inference mode, disabling randomness and using running stats for deterministic outputs.[1]
+
+***
+
+49. What is gradient checking? Why is it useful but not used during training?  
+Gradient checking numerically approximates gradients via finite differences to verify analytic backprop implementation. Useful for debugging; too slow for training due to double computation cost.[5]
+
+***
+
+50. What is the relationship between the learning rate and the batch size?  
+Larger batches provide stable, low-variance gradients, often allowing higher learning rates for faster steps. Smaller batches introduce noise (like regularization), typically needing lower rates.[3]
+
+***
+
+51. What is a second-order optimization method (e.g., Newton's method)? Why are they not commonly used in deep learning?  
+Second-order methods approximate/use Hessian curvature for bigger, informed steps (e.g., Newton: \(w \leftarrow w - H^{-1}g\)). Not common due to massive Hessian computation/storage costs in high dimensions.[4]
+
+***
+
+52. Explain the concept of a "loss landscape."  
+The loss landscape visualizes loss as a function of parameters in multi-D space, showing rugged terrain with valleys (minima), plateaus, and saddles that optimizers navigate.[4]
+
+***
+
+53. What is label smoothing?  
+Label smoothing softens one-hot labels (e.g.,  → [0.9,0.05,0.05]) to reduce overconfidence and improve generalization.[10][11]
+
+***
+
+54. What is focal loss? When is it useful?  
+Focal loss downweights easy examples: \(-(1-p_t)^\gamma \log(p_t)\), focusing on hard/scarce positives. Useful in imbalanced detection tasks like object detection.[10]
+
+***
+
+55. Can you manually calculate the backpropagation step for a very simple 2-layer network?  
+Consider a network with one input \(x\), hidden neuron \(h = \sigma(w_1 x + b_1)\), output \(\hat{y} = w_2 h + b_2\), MSE loss \(L = \frac{1}{2}(\hat{y} - y)^2\).  
+Forward: compute \(h, \hat{y}, L\).  
+Backprop: \(\frac{\partial L}{\partial w_2} = (\hat{y}-y) h\), \(\frac{\partial L}{\partial b_2} = (\hat{y}-y)\);  
+then \(\frac{\partial L}{\partial h} = (\hat{y}-y) w_2\), \(\frac{\partial L}{\partial w_1} = \frac{\partial L}{\partial h} \sigma'(z_1) x\) where \(z_1 = w_1 x + b_1\).[6]
+
+56. What is overfitting? How can you detect it?  
+Overfitting occurs when a model learns training data noise instead of patterns, performing well on train but poorly on validation/test data. Detect it via training loss decreasing while validation loss plateaus or increases (diverging curves).[1]
+
+***
+
+57. What is underfitting? How can you detect it?  
+Underfitting happens when the model is too simple to capture data patterns, yielding high error on both training and validation sets. Detect it when both losses remain high and don't decrease sufficiently during training.[1]
+
+***
+
+58. What is the bias-variance tradeoff in the context of deep learning?  
+Bias measures systematic errors from overly simple models (underfitting); variance measures sensitivity to training data fluctuations (overfitting). The tradeoff balances model complexity: too simple → high bias/low variance; too complex → low bias/high variance.[1]
+
+***
+
+59. What is regularization?  
+Regularization adds a penalty to the loss function to discourage complex models and reduce overfitting. Common forms constrain weights or introduce noise/randomness during training.[1]
+
+***
+
+60. Explain L1 and L2 regularization. How do they affect the model's weights?  
+L1 adds \(\lambda \sum |w_i|\) (promotes sparsity, many weights → 0, feature selection).[1] L2 adds \(\lambda \sum w_i^2\) (shrinks all weights evenly toward 0, smoother models).[1]
+
+***
+
+61. What is Dropout? How does it work during training and inference?  
+Dropout randomly sets a fraction of neurons to 0 during training (e.g., p=0.5), forcing robustness. During inference, all neurons are active but outputs scaled by (1-p) to match expected values.[1]
+
+***
+
+62. Why is Dropout an effective regularizer? (Explain the "ensemble of smaller networks" interpretation).  
+Dropout creates an ensemble of ~2^(n*p) thinner sub-networks across training runs, averaging predictions like bagging. This prevents co-adaptation (neurons relying on specific others) and improves generalization.[1]
+
+***
+
+63. What is Batch Normalization? How does it work?  
+Batch Norm normalizes layer inputs to zero mean/unit variance per mini-batch, then scales/shifts with learnable parameters. Formula: \(\hat{x} = \frac{x - \mu_B}{\sqrt{\sigma_B^2 + \epsilon}}\), then \(y = \gamma \hat{x} + \beta\).[1]
+
+***
+
+64. What are the benefits of Batch Normalization? (e.g., faster training, regularization, reduces internal covariate shift).  
+It accelerates training by reducing internal covariate shift (stabilizing layer distributions), acts as mild regularization (batch noise), and allows higher learning rates.[1]
+
+***
+
+65. What is "internal covariate shift"?  
+Internal covariate shift is the change in input distributions to layers during training as parameters update, slowing convergence. Batch Norm mitigates this by normalizing inputs dynamically.[1]
+
+***
+
+66. Where in the network architecture do you typically place a Batch Norm layer?  
+Place Batch Norm immediately after linear transformations (conv/FC) but before activation functions. Order: Linear → BatchNorm → Activation (e.g., ReLU).[1]
+
+***
+
+67. What is the difference between Batch Norm, Layer Norm, Instance Norm, and Group Norm?  
+- Batch Norm: normalizes across batch (HWC).[1]
+- Layer Norm: normalizes across features (CHW, batch-independent).[1]
+- Instance Norm: per-sample per-channel (HW, style transfer).[1]
+- Group Norm: splits channels into groups (stable for small batches).[1]
+
+***
+
+68. What is Data Augmentation? Provide some examples for image data and text data.  
+Data augmentation artificially expands training data via label-preserving transformations. Images: rotation, flip, crop, color jitter; Text: synonym replacement, back-translation, random insertion/deletion.[1]
+
+***
+
+69. What is Early Stopping? How do you implement it?  
+Early stopping halts training when validation loss stops improving, preventing overfitting. Implement by monitoring val loss over patience epochs (e.g., 10), restore best weights.[1]
+
+***
+
+70. What is a validation set and why is it crucial for hyperparameter tuning?  
+Validation set is held-out data (not train/test) for tuning hyperparameters and model selection. Crucial because it provides unbiased performance estimates during development, preventing overfitting to test set.[1]
+
+***
+
+71. Compare Grid Search, Random Search, and Bayesian Optimization for hyperparameter tuning.  
+| Method | Pros | Cons |  
+|--------|------|------|  
+| Grid Search | Exhaustive, simple | Inefficient (curse of dimensionality) |[1]  
+| Random Search | Efficient, handles unknown importance | Noisy, less systematic |[1]  
+| Bayesian Opt | Models performance landscape, sample-efficient | Complex, computationally expensive |[1]
+
+***
+
+72. What are the most important hyperparameters to tune for a deep neural network?  
+Top priorities: learning rate, batch size, number of layers/neurons, dropout rate, optimizer choice. Secondary: weight decay, activation types, scheduler parameters.[1]
+
+***
+
+73. How does model complexity (depth, width) relate to overfitting?  
+Greater depth/width increases capacity, risking overfitting by memorizing noise unless regularized. Simple datasets need shallower models; complex ones benefit from deeper regularized architectures.[1]
+
+***
+
+74. Is Batch Norm a regularizer? Debate this point.  
+Yes: batch statistics introduce noise, reducing overfitting (induces regularization). No: primary purpose is normalization/stabilization; regularization is side-effect (use dropout instead).[1]
+
+***
+
+75. What is weight decay and how is it different from L2 regularization in modern optimizers like AdamW?  
+Weight decay directly decays weights: \(w \leftarrow (1-\lambda \eta) w\). AdamW decouples it from adaptive gradients (L2 added to loss), preventing interference with Adam's per-parameter scaling.[1]
+
+76. What is a Convolutional Neural Network (CNN)? What types of problems are they best suited for?  
+A CNN is a neural network specialized for grid-structured data like images, using convolutional layers to automatically extract spatial features such as edges, textures, and objects. They're best suited for computer vision tasks including image classification, object detection, semantic segmentation, and facial recognition where local patterns and spatial hierarchies are crucial.[1]
+
+***
+
+77. Explain the convolution operation. What are its key components (kernel/filter, stride, padding)?  
+Convolution slides a small learnable kernel (filter) over the input, computing dot products at each position to produce a feature map highlighting patterns. Key components: kernel detects features, stride sets slide step size (e.g., 2 downsamples), padding adds zeros around edges to control output size.[2][3]
+
+***
+
+78. What does a kernel (filter) learn in a CNN?  
+Kernels learn hierarchical detectors: shallow layers capture edges and gradients, deeper ones combine them into shapes, textures, and complex objects like eyes or wheels.[4]
+
+***
+
+79. What is the purpose of padding? Explain "valid" vs. "same" padding.  
+Padding adds zeros around input borders to prevent spatial dimensions from shrinking too quickly and preserve border information. "Valid" padding outputs smaller maps (no padding); "same" padding matches input size by appropriate zero-padding.[3]
+
+***
+
+80. What is the purpose of the stride parameter?  
+Stride controls how far the kernel slides each step; stride >1 downsamples the feature map, reducing computation and increasing receptive field.[3]
+
+***
+
+81. Explain the concept of a receptive field.  
+The receptive field is the input region that affects a particular feature map unit; it expands with depth, allowing higher layers to see larger context while focusing on relevant features.[5]
+
+***
+
+82. Why are CNNs more efficient than fully-connected networks for image data? (Parameter sharing, local connectivity).  
+CNNs connect neurons only to local input patches (local connectivity) and reuse the same kernel across positions (parameter sharing), reducing parameters from millions to thousands for the same effective field.[4]
+
+***
+
+83. What is a pooling layer (e.g., Max Pooling, Average Pooling)? What is its purpose?  
+Pooling aggregates features in local neighborhoods (max takes strongest signal, average smooths), downsampling maps while providing translation invariance and computational savings.[4]
+
+***
+
+84. What is the advantage of Max Pooling over Average Pooling?  
+Max pooling retains the most prominent features (critical for detection tasks), while average pooling blurs information and may dilute strong signals.[4]
+
+***
+
+85. What is a 1x1 convolution? What are its use cases?  
+1x1 convolution mixes channels pointwise without spatial change, acting like a linear transformation per pixel. Use cases: dimensionality reduction, channel attention, efficient Inception modules.[6]
+
+***
+
+86. What is a "channel" in a CNN? (e.g., the 3 channels in an RGB image).  
+Channels represent feature depth; RGB input has 3 channels (R,G,B); conv layers produce multiple channels, each a different feature map.[2]
+
+***
+
+87. Walk me through the typical architecture of a CNN for image classification.  
+Typical flow: Input → [Conv → ReLU → BatchNorm → Pooling] blocks (extract features) → Flatten/Global Avg Pool → Dense → Dropout → Softmax for class probabilities.[4]
+
+***
+
+88. What is translation invariance in the context of CNNs?  
+Translation invariance means small object shifts in input produce similar activations, achieved through shared weights, pooling, and large receptive fields.[1]
+
+***
+
+89. Explain the architecture and key innovation of LeNet-5.  
+LeNet-5 had 2 conv layers, 2 pooling, 3 fully connected for MNIST digits; key innovation: first successful CNN with learnable convolution and subsampling for handwriting recognition.[6]
+
+***
+
+90. Explain the architecture and key innovation of AlexNet (e.g., using ReLUs, Dropout, GPUs).  
+AlexNet: 5 conv + 3 FC layers, 60M params, won ImageNet 2012; innovations: ReLU for speed, Dropout regularization, data augmentation, and GPU training.[6]
+
+***
+
+91. Explain the key innovation of VGG networks (deeper networks with small 3x3 filters).  
+VGG stacked 16-19 identical 3x3 conv blocks; innovation: small uniform filters + depth achieve large receptive fields with fewer parameters than big filters.[6]
+
+***
+
+92. Explain the key innovation of GoogLeNet / Inception networks (Inception module, multiple filter sizes in parallel).  
+GoogLeNet introduced Inception modules: parallel 1x1/3x3/5x5 convs + pooling concatenated for multi-scale features, plus 1x1 reductions for efficiency (22 layers).[6]
+
+***
+
+93. What is the "degradation" problem in very deep networks?  
+Degradation: training error increases beyond ~20 layers in plain networks due to vanishing gradients and optimization difficulty, despite more capacity.[6]
+
+***
+
+94. Explain the key innovation of ResNet (residual/skip connections). How do they solve the degradation problem?  
+ResNet uses residual blocks: \(y = F(x) + x\) (skip connections), allowing identity mapping and direct gradient flow to early layers, enabling 100+ layer training.[6]
+
+***
+
+95. What is a bottleneck block in a ResNet?  
+Bottleneck block: 1x1 conv (reduce channels) → 3x3 conv → 1x1 (restore) + skip; reduces computation for very deep ResNets like ResNet-50/101.[6]
+
+***
+
+96. Explain the key innovation of DenseNet.  
+DenseNet connects every layer to all subsequent layers via concatenation (dense blocks), maximizing feature reuse, reducing parameters, and alleviating vanishing gradients.[6]
+
+***
+
+97. What is a transposed convolution (or deconvolution)? Where is it used?  
+Transposed convolution upsamples by learning to insert/expand pixels; used in decoders for segmentation (U-Net) and generation (GANs).[4]
+
+***
+
+98. What is a dilated (or atrous) convolution?  
+Dilated convolution expands receptive field by inserting gaps ("holes") in the kernel, preserving resolution for dense prediction tasks like segmentation.[5]
+
+***
+
+99. What is the difference between image classification, object detection, and semantic segmentation?  
+Classification labels entire image; detection finds objects + bounding boxes + classes; segmentation assigns class label to every pixel.[7]
+
+***
+
+100. How would you use a CNN for object detection? (e.g., explain the high-level idea of R-CNN, YOLO).  
+R-CNN: region proposals → crop/warp → CNN features → SVM/classify + regress boxes; YOLO: single CNN predicts grid cells' bounding boxes/classes directly (fast, end-to-end).[8]
+
+***
+
+101. What is an anchor box?  
+Anchor boxes are predefined box shapes/scales at each grid point; network predicts offsets/class probs to match object sizes efficiently.[8]
+
+***
+
+102. How would you use a CNN for semantic segmentation? (e.g., FCN, U-Net).  
+FCN replaces FC layers with conv + upsampling for pixel predictions; U-Net adds encoder-decoder with skips for precise boundaries.[7]
+
+***
+
+103. Explain the U-Net architecture.  
+U-Net: symmetric encoder (downsample to context) + decoder (upsample to details) with skip connections concatenating high-res features for accurate biomedical segmentation.[7]
+
+***
+
+104. What is a vision transformer (ViT)? How does it differ from a CNN?  
+ViT patches images into tokens, adds position embeds, processes via transformer self-attention; global attention vs CNN's local inductive bias.[9]
+
+***
+
+105. What is a separable convolution (depthwise and pointwise)? What is its advantage?  
+Depthwise (spatial conv per channel) + pointwise (1x1 channel mix); ~8-9x fewer params/FLOPs than standard conv, key to lightweight MobileNets.[4]
+
+106. What is a Recurrent Neural Network (RNN)? What makes it suitable for sequential data?  
+A Recurrent Neural Network (RNN) is a neural network designed for sequential data, where connections form directed cycles to maintain a hidden state that captures information from previous time steps. It's suitable for sequences like text, speech, or time series because the same weights are reused across time steps, enabling variable-length input processing and modeling temporal dependencies.[1]
+
+***
+
+107. Explain how an RNN works, including the concept of the hidden state.  
+At each time step t, an RNN takes current input \(x_t\) and previous hidden state \(h_{t-1}\), computes new hidden state \(h_t = \tanh(W_h h_{t-1} + W_x x_t + b)\), and optionally produces output \(y_t\). The hidden state acts as memory, carrying information from all past inputs to inform current/future predictions.[1]
+
+***
+
+108. What is the "many-to-one" RNN architecture? Give an example (e.g., sentiment analysis).  
+Many-to-one RNN processes a full sequence but outputs a single prediction at the end (last hidden state to dense layer). Example: sentiment analysis, where entire review text produces one polarity score (positive/negative).[2]
+
+***
+
+109. What is the "one-to-many" RNN architecture? Give an example (e.g., image captioning).  
+One-to-many RNN takes single input (e.g., encoded image) and generates sequence of outputs autoregressively from hidden states. Example: image captioning, where CNN image features seed RNN to output word sequence like "a dog running."[2]
+
+***
+
+110. What is the "many-to-many" RNN architecture? Give an example (e.g., machine translation).  
+Many-to-many RNN processes input sequence to output sequence, often same or different length, with outputs at each time step. Example: machine translation (English → French), where source sentence produces target sentence word-by-word.[2]
+
+***
+
+111. What is the problem with training simple RNNs on long sequences? (Vanishing/exploding gradients).  
+Simple RNNs suffer vanishing gradients (gradients shrink exponentially through time, forgetting early inputs) or exploding gradients (unstable large updates) during backpropagation through time (BPTT). This makes learning long-term dependencies impossible.[3]
+
+***
+
+112. Explain the architecture of a Long Short-Term Memory (LSTM) cell.  
+LSTM cell has cell state \(C_t\) (long-term memory) + three gates: forget gate \(f_t\) (erase), input gate \(i_t\) + candidate \(\tilde{C}_t\) (add), output gate \(o_t\) (read). Equations: \(C_t = f_t \odot C_{t-1} + i_t \odot \tilde{C}_t\), \(h_t = o_t \odot \tanh(C_t)\).[1]
+
+***
+
+113. What is the purpose of the three gates in an LSTM (input, forget, output)?  
+Forget gate decides what to discard from previous cell state; input gate decides what new info to store; output gate controls what parts of cell state to expose as hidden state output.[1]
+
+***
+
+114. How do the gates in an LSTM help to solve the vanishing gradient problem?  
+Gates use sigmoid (0-1) multiplications that can stay near 1, creating "constant error carousels" where gradients flow unchanged through time via cell state additions/multiplications close to 1.[1]
+
+***
+
+115. What is a Gated Recurrent Unit (GRU)? How is it different from an LSTM?  
+GRU is simplified LSTM with 2 gates (update \(z_t\), reset \(r_t\)) merging cell/hidden states: \(h_t = (1-z_t) \odot h_{t-1} + z_t \odot \tilde{h}_t\).  Fewer parameters (2 vs 4 gates), similar performance, faster training.[3]
+
+***
+
+116. When would you choose a GRU over an LSTM?  
+Choose GRU for simpler models, faster training, similar accuracy on smaller datasets; LSTM for complex long-term dependencies needing more expressiveness.[3]
+
+***
+
+117. What is a Bidirectional RNN? Why is it useful?  
+Bidirectional RNN runs two RNNs forward/backward on sequence, concatenating hidden states for full context. Useful for tasks like NER/POS tagging where predictions benefit from future tokens (e.g., "bank" as river/money).[2]
+
+***
+
+118. What is a stacked (or deep) RNN?  
+Stacked RNN applies multiple RNN layers sequentially; output of one becomes input to next, learning hierarchical representations (words → phrases → sentences).[2]
+
+***
+
+119. What is a sequence-to-sequence (Seq2Seq) model? Explain its encoder-decoder architecture.  
+Seq2Seq maps input sequence to output sequence via RNN encoder (compresses input to fixed context vector) + RNN decoder (generates output autoregressively). Encoder processes source left-to-right; decoder attends/generates target.[4]
+
+***
+
+120. What is the role of the "context vector" in a Seq2Seq model? What is its main limitation?  
+Context vector is final encoder hidden state summarizing entire input for decoder initialization. Limitation: fixed-size bottleneck loses information for long/variable inputs (one vector can't capture everything).[4]
+
+***
+
+121. What is Teacher Forcing?  
+Teacher forcing trains decoder with actual target tokens (not predictions) at each step, speeding convergence by avoiding error accumulation during training.[4]
+
+***
+
+122. How would you handle variable-length sequences in a batch? (Padding, packing).  
+Pad shorter sequences with special tokens (e.g., <PAD>) to max length in batch; use masks/packing to ignore pads during computation; sort by length to minimize padding waste.[4]
+
+***
+
+123. What is beam search? How is it different from a greedy decoding strategy?  
+Beam search maintains top-k most probable sequences at each step, expanding/pruning to balance quality/diversity vs greedy (always pick highest prob next token). Better for coherent long outputs but computationally heavier.[4]
+
+***
+
+124. How can you apply convolutions to text data? (1D CNNs).  
+1D convolutions slide kernels over embedded word sequence, capturing local n-gram patterns (e.g., 3-gram filters detect phrases); multiple kernel sizes → multi-scale features for classification.[5]
+
+***
+
+125. What is a Time-Delayed Neural Network (TDNN)?  
+TDNN applies shared weights to time-delayed input windows, capturing temporal patterns without full recurrence; precursor to CNNs for speech with splice-and-frame approach.[5]
+
+126. What problem with RNNs does the Attention mechanism aim to solve?  
+Attention solves the fixed context vector bottleneck in Seq2Seq models and RNNs' sequential processing limitations, allowing direct access to all input positions regardless of distance, capturing long-range dependencies more effectively.[1]
+
+***
+
+127. Explain the Attention mechanism at a high level.  
+Attention computes weighted sums of input representations, where weights reflect relevance of each input position to the current output position, enabling dynamic focus on important parts of the sequence.[2]
+
+***
+
+128. Explain the concepts of Query, Key, and Value in the context of attention.  
+Query (Q) represents current position needing context; Key (K) from all positions for similarity computation with Q; Value (V) are actual representations weighted by attention scores (softmax(QK^T / sqrt(d)) * V).[2]
+
+***
+
+129. What is the key innovation of the Transformer architecture, as introduced in "Attention Is All You Need"? (Solely relying on self-attention).  
+Transformers replace RNNs entirely with self-attention mechanisms, enabling parallel processing of entire sequences instead of sequential recurrence, dramatically speeding up training.[2]
+
+***
+
+130. What is Self-Attention?  
+Self-attention computes attention within the same sequence, allowing each position to attend to all others (including itself), capturing intra-sequence relationships like coreference or syntax dependencies.[2]
+
+***
+
+131. What is Multi-Head Attention? What is its purpose?  
+Multi-head attention runs h parallel attention layers with different learned projections, concatenating outputs; allows model to jointly attend to information from different representation subspaces.[2]
+
+***
+
+132. Why do we need Positional Encodings in a Transformer? How do they work?  
+Transformers lack recurrence, so positional encodings add fixed or learned position signals to embeddings, enabling awareness of token order (sin/cos functions of different frequencies per dimension).[2]
+
+***
+
+133. Walk through the architecture of a Transformer block (Multi-Head Attention, Add & Norm, Feed-Forward).  
+Transformer block: Multi-Head Self-Attention → Add (residual) & LayerNorm → Feed-Forward (two linear + ReLU/GELU) → Add & LayerNorm; repeated in encoder/decoder stacks.[2]
+
+***
+
+134. What is the difference between the encoder and decoder in a Transformer? (Masked self-attention in the decoder).  
+Encoder: bidirectional self-attention + feed-forward (processes full input); Decoder: masked self-attention (future tokens hidden) + encoder-decoder attention + feed-forward (autoregressive generation).[2]
+
+***
+
+135. Why is the decoder's self-attention "masked"?  
+Masked self-attention prevents positions from attending to future tokens during training, simulating autoregressive generation where predictions only see past/current context.[2]
+
+***
+
+136. What is BERT? What does "Bidirectional" refer to?  
+BERT (Bidirectional Encoder Representations from Transformers) is a pre-trained encoder-only model; "bidirectional" means full contextual embeddings from both directions (unlike left-to-right GPT).[2]
+
+***
+
+137. What were the two pre-training tasks for BERT? (Masked Language Model, Next Sentence Prediction).  
+Masked Language Model (MLM): predict 15% masked tokens bidirectionally; Next Sentence Prediction (NSP): classify if two segments follow each other (A,B vs random).[2]
+
+***
+
+138. What is the [CLS] token in BERT? The [SEP] token?  
+[CLS] is special first token whose final hidden state encodes entire sequence representation for classification; [SEP] separates sentence pairs or marks sequence end.[2]
+
+***
+
+139. How would you use a pre-trained BERT model for a downstream task like sentiment classification?  
+Add classification head (linear + softmax) on [CLS] token output, fine-tune all/upper layers on labeled data; freeze early layers if compute-constrained.[2]
+
+***
+
+140. What is GPT (Generative Pre-trained Transformer)? How is its architecture different from BERT's? (It's a decoder-only model).  
+GPT is decoder-only Transformer pre-trained on next-token prediction (autoregressive language modeling); unidirectional left-to-right vs BERT's bidirectional encoder.[2]
+
+***
+
+141. What is the difference between a language model like GPT and an embedding model like Word2Vec?  
+GPT produces contextual embeddings + generates text autoregressively (transformer-based, bidirectional context during training); Word2Vec gives static context-independent word vectors (shallower, predictive/contextual averaging).[2]
+
+***
+
+142. What are some of the computational challenges of Transformers? (e.g., quadratic complexity of self-attention).  
+Self-attention scales O(n²) with sequence length (QK matrices), limiting long-context processing; high memory for attention masks/keys/values; parallel but memory-bound.[2]
+
+***
+
+143. What is a Vision Transformer (ViT)?  
+ViT applies Transformer encoder to image patches (split image into fixed-size patches, flatten + embed + position encode), treating vision as sequence modeling.[3]
+
+***
+
+144. How does a ViT process an image? (Splitting into patches).  
+ViT splits image into N patches (e.g., 16x16), linearly projects to D-dim embeddings, adds [CLS]/positions, feeds to Transformer encoder, uses [CLS] for classification.[3]
+
+***
+
+145. What are some of the limitations of the Transformer architecture?  
+Quadratic O(n²) complexity limits long sequences; lacks built-in inductive biases (translation equivariance, locality) requiring more data than CNNs/RNNs; high memory for attention; struggles with extrapolation beyond training lengths.[2]
+
+146. What is the difference between a discriminative model and a generative model?  
+Discriminative models learn P(Y|X) to classify/map inputs to outputs (e.g., classifiers like logistic regression, CNNs).[1] Generative models learn P(X) or P(X,Y) to model data distribution and generate new samples (e.g., GANs, VAEs).[1]
+
+***
+
+147. What is a Generative Adversarial Network (GAN)? Explain its two main components.  
+GAN consists of Generator (G) creating fake samples from noise and Discriminator (D) distinguishing real vs fake data. They compete: G fools D, D improves detection, reaching Nash equilibrium where G produces realistic data.[1]
+
+***
+
+148. Describe the "minimax game" that a GAN plays during training.  
+Training alternates: D maximizes log(D(real)) + log(1-D(G(z))); G minimizes log(1-D(G(z))) or maximizes log(D(G(z))). It's zero-sum: D's gain is G's loss, converging when D can't distinguish (D=0.5).[1]
+
+***
+
+149. What is the loss function for the generator? For the discriminator?  
+Discriminator: \(\max_D V(D,G) = \mathbb{E}_{x\sim p_{data}}[\log D(x)] + \mathbb{E}_{z\sim p_z}[\log(1-D(G(z)))]\). Generator: \(\min_G V(D,G) = \mathbb{E}_{z\sim p_z}[\log(1-D(G(z)))]\) (non-saturating: \(\max \log D(G(z))\)).[1]
+
+***
+
+150. What are some common problems when training GANs? (Mode collapse, non-convergence).  
+Mode collapse (G produces limited samples), training instability/non-convergence (oscillations), vanishing gradients.[1]
+
+***
+
+151. What is "mode collapse"?  
+Mode collapse occurs when Generator produces only few data modes, ignoring data manifold diversity despite perfect D fooling.[1]
+
+***
+
+152. What are some architectural improvements to stabilize GAN training? (e.g., DCGAN, WGAN).  
+DCGAN: conv layers, BatchNorm, LeakyReLU; WGAN: Wasserstein loss + Lipschitz constraint (gradient penalty); spectral norm.[1]
+
+***
+
+153. What is a Variational Autoencoder (VAE)?  
+VAE is encoder-decoder where encoder outputs mean/variance of latent distribution q(z|x), decoder reconstructs from p(x|z).[1] Trained with reconstruction + KL divergence to prior N(0,1).[1]
+
+***
+
+154. What is the "reparameterization trick" in VAEs and why is it necessary?  
+Reparameterization: z = μ + σ ⊙ ε (ε~N(0,1)) makes sampling differentiable for backprop. Necessary because direct argmin_z breaks gradient flow through stochastic sampling.[1]
+
+***
+
+155. Compare and contrast GANs and VAEs.  
+GANs: sharp high-fidelity samples, unstable training, no explicit likelihood; VAEs: explicit density, blurry samples, stable but lower quality. GANs adversarial, VAEs variational inference.[1]
+
+***
+
+156. What is a Diffusion Model? Explain the high-level concept of the forward and reverse processes.  
+Forward: gradually add Gaussian noise to data over T steps until pure noise; reverse: neural net denoises step-by-step back to data distribution. Trained to predict noise added at each step.[1]
+
+***
+
+157. Why have Diffusion Models become so popular recently for image generation (e.g., DALL-E 2, Stable Diffusion)?  
+Superior sample quality/text alignment vs GANs, stable training, scalable to large models/datasets, controllable via classifier guidance.[1]
+
+***
+
+158. What is an autoregressive model (e.g., PixelCNN)?  
+Autoregressive models factorize joint distribution as product of conditionals p(x) = ∏ p(x_i | x_<i), generating pixels sequentially left-to-right/top-to-bottom.[1] PixelCNN uses masked convs for causality.[1]
+
+***
+
+159. What is a normalizing flow?  
+Normalizing flow transforms simple base distribution (Gaussian) through invertible neural nets to complex data distribution, enabling exact likelihood computation. Change-of-variablesles: log p(x) = log p(z) + ∑ log|det J|.[1]
+
+***
+
+160. How would you evaluate the quality of a generative model? (e.g., Inception Score, FID).  
+Inception Score (IS): measures sample quality/diversity via pretrained classifier entropy; FID: Fréchet Inception Distance compares real/fake feature statistics (lower better). Also: Precision/Recall, KID, likelihood.[1]
+
+[1](https://www.geeksforgeeks.org/deep-learning/rnn-vs-lstm-vs-gru-vs-transformers/)

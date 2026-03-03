@@ -1,0 +1,19 @@
+What are Background Tasks?
+When a client hits your API, sometimes you need to do extra work after sending the response — without making the client wait. Examples in Gen AI:
+- Client uploads a document → respond immediately → chunk & embed it in background
+- Client sends a prompt → respond with answer → log usage to DB in background
+- User registers → respond with success → send welcome email in background
+FastAPI's BackgroundTasks handles this natively — no Celery, no Redis needed for simple cases.
+Key insight: background_tasks.add_task(func, arg1, arg2) — first arg is the function, rest are its arguments. Works with both sync and async functions.
+------------------------------------------------------------------------------------------
+Why does this matter for Gen AI?
+Your RAG pipeline starts here — users upload PDFs, Word docs, text files. FastAPI handles file uploads with File and UploadFile.
+------------------------------------------------------------------------------------------
+When do you use Form data vs JSON?
+                JSON Body           Form Data
+Use for         API to API calls    Browser HTML forms
+File uploads    ❌ can't mix        ✅ multipart/form-data
+Content-Type    application/json    application/x-www-form-urlencoded
+
+In Gen AI you'll use forms for: login forms, feedback forms, prompt submission with file attachments.
+-----------------------------------------------------------------------------------------------
