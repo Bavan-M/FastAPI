@@ -1,0 +1,37 @@
+Custom Exception Handlers + Error Responses
+Why does this matter?
+By default when something goes wrong in your API, FastAPI returns errors in its own format. In production Gen AI APIs you need:
+
+Consistent error format across every endpoint
+Clean error messages (no internal stack traces leaking to clients)
+Specific error types (validation error looks different from auth error)
+Request ID in every error so you can trace it in logs
+
+
+Compare these two — which API would you rather consume?
+// ❌ Inconsistent — hard to handle on frontend
+"Internal Server Error"
+
+// ✅ Clean, consistent, actionable
+{
+    "error": "validation_error",
+    "message": "Invalid input",
+    "details": [{"field": "temperature", "issue": "must be between 0 and 2"}],
+    "request_id": "abc-123"
+}
+
+
+# --- Common status codes cheat sheet ---
+# 400 Bad Request       — client sent invalid data
+# 401 Unauthorized      — not authenticated (no/invalid token)
+# 403 Forbidden         — authenticated but not allowed
+# 404 Not Found         — resource doesn't exist
+# 409 Conflict          — resource already exists (duplicate email etc.)
+# 413 Payload Too Large — file/content too big
+# 422 Unprocessable     — validation failed
+# 429 Too Many Requests — rate limit exceeded
+# 500 Internal Server   — something broke on server side
+# 503 Service Unavailable — LLM API is down
+
+RequestValidationError -> fires when Pydantic rejects the request body — wrong types, missing fields, failed validators.
+Custom Exception Handlers -> The production-grade approach — define your own exception types and handle everything consistently.

@@ -1,0 +1,20 @@
+What are Lifespan Events?
+When your FastAPI app starts up and shuts down, you often need to:
+On startup:
+
+Connect to databases
+Load ML models into memory
+Initialize vector DB clients
+Warm up LLM clients
+Load config/secrets from vault
+
+On shutdown:
+Close DB connections cleanly
+Flush pending logs
+Release GPU memory
+Cancel background tasks
+
+Without lifespan management, your app either crashes on first request (resources not ready) or leaks connections (resources not cleaned up).
+The modern FastAPI way uses Python's @asynccontextmanager — everything before yield runs on startup, everything after yield runs on shutdown.
+
+App starts → [startup code] → yield → App runs → [shutdown code] → App stops
