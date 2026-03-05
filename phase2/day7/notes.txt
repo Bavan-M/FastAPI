@@ -1,7 +1,6 @@
 What are Lifespan Events?
 When your FastAPI app starts up and shuts down, you often need to:
 On startup:
-
 Connect to databases
 Load ML models into memory
 Initialize vector DB clients

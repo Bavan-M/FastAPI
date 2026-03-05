@@ -1,0 +1,31 @@
+What are we building?
+A fully functional Task Manager API where:
+
+Users can register and login
+Each user manages their own tasks (CRUD)
+Admins can see all users and all tasks
+Every route is protected with token-based auth
+Clean error handling throughout
+Proper project structure with routers, schemas, dependencies
+Lifespan manages app resources
+
+phase2/
+└── mini_project/
+    ├── main.py
+    ├── routers/
+    │   ├── __init__.py
+    │   ├── auth.py
+    │   ├── tasks.py
+    │   └── admin.py
+    ├── models/
+    │   ├── __init__.py
+    │   └── schemas.py
+    ├── dependencies/
+    │   ├── __init__.py
+    │   └── auth.py
+    ├── core/
+    │   ├── __init__.py
+    │   └── config.py
+    └── data/
+        ├── __init__.py
+        └── store.py
