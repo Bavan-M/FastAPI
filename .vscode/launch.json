@@ -1,0 +1,54 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "FastAPI: Debug Main App",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "uvicorn",
+            "args": [
+                "main:app",
+                "--reload",
+                "--host", "127.0.0.1",
+                "--port", "8000",
+                "--log-level", "debug"
+            ],
+            "console": "integratedTerminal",
+            "jinja": true,
+            "cwd": "C:\\Users\\user\\Python Programs\\FastAPI\\phase2\\mini-project",
+            "env": {
+                "PYTHONPATH": "C:\\Users\\user\\Python Programs\\FastAPI\\phase2\\mini-project;C:\\Users\\user\\Python Programs\\FastAPI\\phase2"
+            }
+        },
+        {
+            "name": "Python: Debug Current File",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "cwd": "C:\\Users\\user\\Python Programs\\FastAPI\\phase2\\mini-project",
+            "env": {
+                "PYTHONPATH": "C:\\Users\\user\\Python Programs\\FastAPI\\phase2\\mini-project"
+            }
+        },
+        {
+            "name": "FastAPI: Debug with Reload from Root",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "uvicorn",
+            "args": [
+                "mini-project.main:app",
+                "--reload",
+                "--host", "127.0.0.1",
+                "--port", "8000",
+                "--log-level", "debug"
+            ],
+            "console": "integratedTerminal",
+            "jinja": true,
+            "cwd": "C:\\Users\\user\\Python Programs\\FastAPI\\phase2",
+            "env": {
+                "PYTHONPATH": "C:\\Users\\user\\Python Programs\\FastAPI\\phase2"
+            }
+        }
+    ]
+}

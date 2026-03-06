@@ -25,10 +25,12 @@ def get_current_user(authorization:Optional[str]=Header(None))->dict:
         raise UnAuthorizedException("User no longer exists")
     return user
 
-def current_user(current_user:dict=Depends(get_current_user))->dict:
+def require_admin(current_user:dict=Depends(get_current_user))->dict:
     if current_user['role']!='admin':
         raise ForbiddenException("Admin access required")
     return current_user
+
+
 
 
 

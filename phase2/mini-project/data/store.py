@@ -74,12 +74,12 @@ def get_task_by_owner_id(owner_id:int)->Optional[dict]:
 def get_task_by_id(id:int)->Optional[dict]:
     return tasks_db.get(id)
 
-def create_task(title:str,description:str,status:str,priority:str,owner_id:int)->dict:
+def create_task(title:str,description:str,priority:str,owner_id:int)->dict:
     global task_id_counter
     task={
         "title":title,
         "description":description,
-        "status":status,
+        "status":"todo",
         "priority":priority,
         "owner_id":owner_id,
         "created_at":datetime.now(),
