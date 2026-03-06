@@ -3,3 +3,9 @@ uvicorn
 pydantic-settings
 python-multipart
 httpx
+passlib
+bcrypt
+argon2_cffi
+jose
+jwt
+python-jose[cryptography]

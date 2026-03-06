@@ -1,0 +1,39 @@
+Day 1 — JWT + bcrypt + OAuth2 Password Flow
+
+The Big Picture First
+Right now in your Task Manager, auth looks like this:
+User sends "token-alice" → you check a hardcoded dict → done
+
+In production it looks like this:
+User sends password → bcrypt verifies hash → JWT generated → 
+User sends JWT → signature verified → user extracted → done
+
+Part 1: First time (Login)
+User sends password → bcrypt verifies hash → JWT generated
+-> User sends password: You type your email and password on a website
+-> bcrypt verifies hash: The system checks if your password matches what's stored in the database (the stored version is scrambled/hashed for security)
+-> JWT generated: If password is correct, the server creates a special "token" (like a digital ID card)
+
+Part 2: Every subsequent request
+User sends JWT → signature verified → user extracted → done
+-> User sends JWT: Your browser automatically sends that digital ID card with every request
+-> signature verified: Server checks if the ID card is real (not fake/tampered with)
+-> user extracted: Server reads who you are from the ID card
+-> done: Server processes your request (loads your profile, etc.)
+
+Three things to learn today:
+-> bcrypt — hashes passwords so you never store plain text
+-> JWT — cryptographically signed tokens so you never need a token database
+-> OAuth2 password flow — the standard FastAPI pattern that Swagger UI understands natively
+
+
+Why never store plain text passwords?
+If your database gets breached, plain text passwords expose every user instantly. 
+bcrypt hashes are one-way — you can verify a password against a hash but you can never reverse the hash back to the password.
+
+A JWT (JSON Web Token) has 3 parts separated by dots:
+Token : eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhbGljZSIsInVzZXJfaWQiOjEsInJvbGUiOiJhZG1pbiIsImV4cCI6MTc3MjgyMDY2OH0.mPAzsqPakRXCO9xLHUyXTkzeLjqwXqyvntQaeu1S7yY
+-> eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9 = Header  (algorithm)
+-> eyJzdWIiOiJhbGljZSIsInVzZXJfaWQiOjEsInJvbGUiOiJhZG1pbiIsImV4cCI6MTc3MjgyMDY2OH0 =  Payload (your data)
+-> mPAzsqPakRXCO9xLHUyXTkzeLjqwXqyvntQaeu1S7yY = Signature (tamper-proof)
+Decode payload : {'sub': 'alice', 'user_id': 1, 'role': 'admin', 'exp': 177282066}
