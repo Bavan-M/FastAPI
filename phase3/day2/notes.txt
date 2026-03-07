@@ -1,0 +1,16 @@
+Day 2 — Refresh Tokens + Token Blacklisting + Brute Force Protection
+The Problem with Day 1's Auth
+In Day 1, access tokens expire in 30 minutes. After that the user has to login again. That's a terrible user experience. Also:
+
+There's no way to logout — the JWT is valid until it expires
+A stolen token works until expiry — no way to invalidate it
+No protection against someone trying thousands of passwords
+
+Today fixes all three.
+
+Topic 1 — Refresh Tokens → 01_refresh_tokens.py
+The Two-Token Strategy
+Access Token  → short-lived (15 mins) → used for every API request
+Refresh Token → long-lived (7 days)   → used ONLY to get new access tokens
+When the access token expires, the client uses the refresh token to silently get a new one — without asking the user to login again. 
+If the refresh token expires, only then does the user need to login.
