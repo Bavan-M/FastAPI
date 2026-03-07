@@ -14,3 +14,8 @@ Access Token  → short-lived (15 mins) → used for every API request
 Refresh Token → long-lived (7 days)   → used ONLY to get new access tokens
 When the access token expires, the client uses the refresh token to silently get a new one — without asking the user to login again. 
 If the refresh token expires, only then does the user need to login.
+
+Topic 2 — Token Blacklisting → 02_token_blacklist.py
+The Problem
+Even after logout, the access token is still technically valid until it expires. 
+If someone steals it in those remaining minutes, they still have access. Token blacklisting solves this.
