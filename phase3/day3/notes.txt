@@ -1,0 +1,27 @@
+if user["role"] != "admin":
+    raise HTTPException(403, "Admin only")
+```
+
+This is **binary** — either admin or not. But real systems need more nuance:
+```
+Alice  → admin   → can do everything
+Bob    → user    → can manage own tasks only
+Charlie → analyst → can read all data but not modify
+Dave   → guest   → can only read public endpoints
+AI Service → can call /embeddings and /generate but nothing else
+```
+
+Today you'll build a system that handles all of this cleanly.
+
+---
+
+## Topic 1 — Role Based Access Control → `01_rbac.py`
+
+### What is RBAC?
+
+Instead of checking permissions one by one, you assign **roles** to users and **permissions** to roles. A user inherits all permissions of their role.
+```
+Role: admin   → permissions: [read, write, delete, manage_users, view_analytics]
+Role: analyst → permissions: [read, view_analytics]
+Role: user    → permissions: [read, write_own]
+Role: guest   → permissions: [read_public]

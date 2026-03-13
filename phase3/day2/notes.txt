@@ -19,3 +19,10 @@ Topic 2 — Token Blacklisting → 02_token_blacklist.py
 The Problem
 Even after logout, the access token is still technically valid until it expires. 
 If someone steals it in those remaining minutes, they still have access. Token blacklisting solves this.
+
+Topic 3 — Brute Force Protection → 03_brute_force_protection.py
+What is Brute Force?
+Someone writes a script that tries thousands of passwords on your /auth/login endpoint. Without protection, they can eventually guess correctly. We stop this with:
+Rate limiting login attempts per IP
+Account lockout after N failed attempts
+Progressive delays — each failure waits longer

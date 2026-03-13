@@ -1,0 +1,13 @@
+Day 4 — API Key Authentication
+Why API Keys for Gen AI?
+JWT is great for user-facing apps — login, session, logout. But Gen AI APIs are mostly called programmatically by:
+
+Your frontend calling your RAG API
+A LangChain agent calling your embedding endpoint
+A CI/CD pipeline calling your evaluation API
+A customer's backend calling your LLM gateway
+
+Nobody logs in with a username/password in these cases. They just pass an API key in the header — exactly like OpenAI, Anthropic, and Pinecone do.
+OpenAI:    Authorization: Bearer sk-...
+Anthropic: x-api-key: sk-ant-...
+Pinecone:  Api-Key: abc-123...
