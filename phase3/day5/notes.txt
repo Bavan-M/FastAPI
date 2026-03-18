@@ -1,0 +1,35 @@
+## Day 5 — OAuth2 with Google (Third-Party Login)
+
+### What are we building?
+
+The **"Sign in with Google"** button you see on every modern app. Instead of managing passwords yourself, you delegate authentication to Google. Google verifies the user's identity and tells your API who they are.
+
+### Why does this matter for Gen AI projects?
+
+Your Gen AI app will have a frontend — and nobody wants to create yet another account. Google login means:
+- Zero password management on your side
+- Users trust Google's security
+- Instant onboarding — one click and they're in
+- You get verified email addresses automatically
+
+---
+
+### The OAuth2 Flow — understand this first
+```
+1. User clicks "Sign in with Google" on your frontend
+        ↓
+2. Frontend redirects to Google's auth page
+        ↓
+3. User approves permissions on Google's page
+        ↓
+4. Google redirects back to your API with an auth CODE
+        ↓
+5. Your API exchanges the CODE for an access token (server to server)
+        ↓
+6. Your API uses the token to fetch user's profile from Google
+        ↓
+7. Your API creates/finds the user in YOUR database
+        ↓
+8. Your API issues YOUR OWN JWT to the user
+        ↓
+9. User is logged in — all future requests use YOUR JWT
