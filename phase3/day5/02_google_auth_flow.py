@@ -13,13 +13,13 @@ app=FastAPI(title="Real google OAuth")
 # CONFIG — replace with your real credentials
 # In production load from .env file
 # ============================================================
-GOOGLE_CLIENT_ID="1061194874306-tu5902lb4or43naf0jlij1kegob7k6mt.apps.googleusercontent.com"
-GOOGLE_CLIENT_SECRET="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"
-GOOGLE_REDIRECT_URI= "http://localhost:8000/auth/google/callback"
+GOOGLE_CLIENT_ID=""
+GOOGLE_CLIENT_SECRET=""
+GOOGLE_REDIRECT_URI= ""
 
-GOOGLE_AUTH_URL     = "https://accounts.google.com/o/oauth2/v2/auth"
-GOOGLE_TOKEN_URL    = "https://oauth2.googleapis.com/token"
-GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v2/userinfo"
+GOOGLE_AUTH_URL     = ""
+GOOGLE_TOKEN_URL    = ""
+GOOGLE_USERINFO_URL = ""
 
 
 oauth_states:dict={}
