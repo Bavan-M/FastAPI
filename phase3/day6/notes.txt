@@ -1,0 +1,38 @@
+Day 6 — HTTPS, Security Headers, Secrets Management
+Why does this matter?
+You've built great auth — JWT, API keys, OAuth2. But if your API:
+
+Runs on HTTP instead of HTTPS → passwords and tokens travel in plain text
+Has no security headers → vulnerable to XSS, clickjacking, MIME sniffing
+Has secrets hardcoded in code → one GitHub push exposes everything
+
+Today you lock all of this down.
+
+Topic 1 — Security Headers → 01_security_headers.py
+What are security headers?
+HTTP response headers that tell browsers how to behave securely. They cost you zero performance and protect against real attacks.
+
+Putting It All Together (SecurityHeadersMiddleware)
+When a visitor comes to your website, your security middleware acts like a security checkpoint:
+1.First, it processes their request through your app
+2.Then it adds all these protective layers before sending them back out
+    Each layer protects against a different type of attack:
+    No fake floors (clickjacking)
+    No disguised packages (MIME sniffing)
+    No hiding in shadows (XSS)
+    Strict visitor rules (CSP)
+    Secure tunnels only (HSTS)
+    Limited return addresses (Referrer)
+    Locked equipment rooms (Permissions)
+    No house builder signs (Server header)
+3.This way, your web app becomes a well-fortified house that's safe for visitors and difficult for burglars to break into!
+
+Topic 2 — Secrets Management → 02_secrets_management.py
+The golden rule of secrets:
+Never hardcode secrets in your code. This includes:
+
+Database URLs
+JWT secret keys
+API keys (OpenAI, Anthropic etc.)
+Google OAuth credentials
+Anything that changes between dev/prod
