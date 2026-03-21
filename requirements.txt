@@ -10,3 +10,10 @@ jose
 jwt
 python-jose[cryptography]
 dotenv
+sqlalchemy[asyncio] 
+asyncpg 
+alembic 
+psycopg2-binary 
+motor 
+redis[asyncio] 
+aioredis

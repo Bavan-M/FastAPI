@@ -11,7 +11,6 @@ Today you lock all of this down.
 Topic 1 — Security Headers → 01_security_headers.py
 What are security headers?
 HTTP response headers that tell browsers how to behave securely. They cost you zero performance and protect against real attacks.
-
 Putting It All Together (SecurityHeadersMiddleware)
 When a visitor comes to your website, your security middleware acts like a security checkpoint:
 1.First, it processes their request through your app
@@ -30,9 +29,14 @@ When a visitor comes to your website, your security middleware acts like a secur
 Topic 2 — Secrets Management → 02_secrets_management.py
 The golden rule of secrets:
 Never hardcode secrets in your code. This includes:
-
 Database URLs
 JWT secret keys
 API keys (OpenAI, Anthropic etc.)
 Google OAuth credentials
 Anything that changes between dev/prod
+
+
+Topic 3 - Why HTTPS?
+Without HTTPS every request travels in **plain text** across the network:
+HTTP:  Authorization: Bearer eyJhbGc...  ← anyone on network can read this
+HTTPS: [encrypted gibberish]              ← unreadable without private key

@@ -1,0 +1,41 @@
+What are we building?
+A production-ready Auth Service that a real Gen AI company would ship:
+
+Users register/login with bcrypt + JWT
+Google OAuth support
+Refresh tokens with proper rotation
+Token blacklisting on logout
+Brute force protection on login
+3 roles — admin, user, guest with proper RBAC
+API key management — create, list, revoke with tiers
+Security headers on every response
+Secrets from .env — nothing hardcoded
+Consistent error responses throughout
+
+
+phase3/
+└── mini_project/
+    ├── main.py
+    ├── .env
+    ├── routers/
+    │   ├── __init__.py
+    │   ├── auth.py
+    │   ├── api_keys.py
+    │   └── admin.py
+    ├── core/
+    │   ├── __init__.py
+    │   ├── config.py
+    │   ├── security.py
+    │   └── exceptions.py
+    ├── models/
+    │   ├── __init__.py
+    │   └── schemas.py
+    ├── dependencies/
+    │   ├── __init__.py
+    │   └── auth.py
+    ├── middleware/
+    │   ├── __init__.py
+    │   └── security.py
+    └── data/
+        ├── __init__.py
+        └── store.py
