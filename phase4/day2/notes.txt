@@ -1,0 +1,26 @@
+Day 2 — Full Async CRUD + Repository Pattern
+The Problem with putting DB logic in routes
+Right now your routes look like this:
+@app.post("/users")
+async def create_user(username: str, db: AsyncSession = Depends(get_db)):
+    user = User(username=username)   # DB logic IN the route
+    db.add(user)
+    await db.commit()
+    await db.refresh(user)
+    return user
+
+This works for 2 routes. But when you have 50 routes across 10 files, the same DB logic gets copy-pasted everywhere. 
+The repository pattern fixes this.
+Route (HTTP layer)
+    ↓
+Service (business logic)
+    ↓
+Repository (DB logic)
+    ↓
+SQLAlchemy (ORM)
+    ↓
+PostgreSQL
+
+Repository — only talks to the DB. No business logic.
+Service — business logic. Calls repository. No HTTP knowledge.
+Route — only handles HTTP. Calls service. No DB knowledge.

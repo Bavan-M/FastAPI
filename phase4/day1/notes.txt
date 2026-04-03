@@ -1,0 +1,17 @@
+What is SQLAlchemy?
+SQLAlchemy is Python's most powerful ORM (Object Relational Mapper). Instead of writing raw SQL, you define Python classes that map to database tables:
+# Raw SQL — what you'd write without ORM
+"INSERT INTO users (username, email) VALUES ('alice', 'alice@example.com')"
+
+# SQLAlchemy ORM — what you write instead
+user = User(username="alice", email="alice@example.com")
+session.add(user)
+await session.commit()
+```
+
+### Why async SQLAlchemy?
+
+Regular SQLAlchemy **blocks** — while waiting for the DB, your server can't handle other requests. Async SQLAlchemy uses `asyncpg` under the hood, so DB operations are non-blocking — your server handles thousands of concurrent requests.
+```
+Sync:  Request 1 waits for DB → Request 2 waits → Request 3 waits
+Async: Request 1 waits for DB → Request 2 handled → Request 3 handled → DB done → Request 1 continues

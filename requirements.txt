@@ -17,3 +17,4 @@ psycopg2-binary
 motor 
 redis[asyncio] 
 aioredis
+alembic
