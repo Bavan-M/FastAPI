@@ -1,0 +1,44 @@
+Day 1 — Deep Dive asyncio
+Why asyncio matters so much for Gen AI?
+Every Gen AI operation is IO-bound:
+
+Waiting for OpenAI to respond → 2-10 seconds
+Waiting for embeddings → 0.5-2 seconds
+Waiting for vector DB → 0.1-0.5 seconds
+Waiting for PostgreSQL → 0.01-0.1 seconds
+
+Without async, your server handles one request at a time. With async, while one request waits for OpenAI, your server handles 100 other requests.
+This is the difference between a toy app and a production system.
+
+Sync (blocking):
+Request 1 → wait 5s for LLM → respond
+Request 2 →                  → wait 5s for LLM → respond
+Request 3 →                                    → wait 5s
+Total: 15s for 3 requests
+
+Async (non-blocking):
+Request 1 → wait for LLM ─────────────────────→ respond
+Request 2 →    wait for LLM ──────────────────→ respond
+Request 3 →       wait for LLM ───────────────→ respond
+Total: ~5s for 3 requests
+
+A coroutine is a pausable function that can stop execution at certain points, let other code run, and then resume from where it paused — all while remembering its state.
+
+----------------------------------------------------------------------------------------
+day2
+asyncio.gather with return_exceptions=True:
+You tell the team: "If someone fails, note it down but keep everyone working. We want all results, good or bad."
+Example: Collecting data from 3 APIs — if one fails, you still want the other two to complete and give their data.
+
+TaskGroup:
+You tell the team: "We're a single unit. If ONE person fails, the ENTIRE mission is compromised — cancel everyone immediately."
+Example: Processing a bank transaction that requires 3 steps. If step 2 fails, step 3 should NOT happen. Stop everything right away.
+
+Why TaskGroup is safer:
+Because failed tasks often leave corrupted state — continuing with other tasks might:
+Waste resources on work that can't be used
+Cause cascading errors
+Leave data in inconsistent states
+
+--------------------------------------------------------------------------------------------
+day3

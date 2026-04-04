@@ -1,0 +1,9 @@
+Day 3 — Relationships
+What are Relationships?
+In a real database, data is connected:
+
+A User has many Posts (one-to-many)
+A Post has many Tags and a Tag belongs to many Posts (many-to-many)
+A User has one Profile (one-to-one)
+
+Without relationships you'd write raw JOINs. SQLAlchemy handles this with relationship() — you just access user.posts and it figures out the SQL.
