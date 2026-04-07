@@ -42,3 +42,18 @@ Leave data in inconsistent states
 
 --------------------------------------------------------------------------------------------
 day3
+asyncio.Queue — producer/consumer pattern
+asyncio.Lock — prevent race conditions
+asyncio.Event — signal between coroutines
+
+The Asyncio Primitives Cheat Sheet
+Primitive               Use Case                                            Gen AI Example
+gather                  Run multiple coroutines concurrently                Call GPT-4 + Claude simultaneously
+TaskGroup               Safe concurrent tasks (3.11+)                       Parallel document processing
+wait(FIRST_COMPLETED)   Race — take fastest result                          Fastest LLM response
+Semaphore               Limit concurrency                                   Max 3 LLM calls at once
+Queue                   Producer/consumer pipeline                          Document ingestion queue
+Lock                    Protect shared state                                Token usage counter
+Event                   Signal between coroutines                           Model loaded signal
+wait_for                Timeout on any coroutine                            LLM call timeout
+shield                  Protect from cancellation                           Critical DB write

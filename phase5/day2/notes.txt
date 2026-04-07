@@ -1,0 +1,58 @@
+Day 2 — StreamingResponse + Server-Sent Events (SSE)
+The Problem with normal responses
+With a normal API response:
+Client → POST /generate
+Server → [waits 10 seconds for LLM]
+Server → sends entire response at once
+Client → blank screen for 10 seconds → text appears all at once
+
+With streaming:
+Client → POST /generate
+Server → sends token 1 immediately
+Server → sends token 2 (100ms later)
+Server → sends token 3 (100ms later)
+...
+Client → text appears word by word — just like ChatGPT
+
+Two ways to stream in FastAPI:
+StreamingResponse — raw HTTP chunked transfer
+SSE (Server-Sent Events) — structured event stream, browser-native
+
+SSE = A way for a server to send automatic updates to a browser without the browser asking for them repeatedly.
+(ITS ALWAYS ONE WAY SERVER->CLIENT {means server is always in open and keeps on seding the responses})
+(ONE MORE IS TWO WAY SERVER<->CLIENT {Websocket which we will see in future})
+
+SSE:
+Traditional HTTP (Without SSE):
+Browser: "Hey server, any new messages?"
+Server: "No."
+[5 seconds later]
+Browser: "Hey server, any new messages now?"
+Server: "No."
+[5 seconds later]  
+Browser: "Hey server, any new messages now?"
+Server: "Yes! Here's 1 message."
+Browser: "Thanks!"
+
+Problem: Browser has to KEEP ASKING (polling)
+         Wasteful! 100 questions for 1 answer
+
+With SSE:
+Browser: "Hey server, tell me when you have messages"
+Server: "Sure! I'll keep this connection open..."
+[5 seconds later - message arrives]
+Server: "Here's a message!"
+[5 seconds later - another message]
+Server: "Here's another message!"
+Browser: "Thanks! (I didn't have to keep asking)"
+
+Benefit: Server pushes updates automatically!
+
+
+Aspect	                        SSE (Radio)	                    StreamingResponse (Water Pipe)
+What you get	                Labeled announcements	        Raw liquid/data
+Know what it is	                Yes (weather vs traffic)	    No (you figure it out)
+Connection drops	            Auto-reconnects	                Stops forever
+Setup complexity	            Simple (just listen)	        Complex (build everything)
+Can send files	                No (text only)	                Yes (anything)
+Best for	                    Updates, notifications	        Downloads, raw data
