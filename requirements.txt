@@ -18,3 +18,4 @@ motor
 redis[asyncio] 
 aioredis
 alembic
+websockets

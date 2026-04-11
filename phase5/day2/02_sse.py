@@ -46,7 +46,7 @@ async def sse_basic():
         headers={
             "Cache-Control": "no-cache",      # Don't cache old data
             "Connection": "keep-alive",       # Keep connection open
-            "X-Accel-Buffering": "no"         # Proxy: send immediately
+            "X-Accel-Buffering": "no"         # Proxy: send immediately Send each chunk immediately
         }
     )
 

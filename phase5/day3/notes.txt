@@ -1,0 +1,14 @@
+Day 3 — WebSockets
+SSE vs WebSockets — when to use which?
+                    SSE                                         WebSocket
+Direction           Server → Client only                        Bidirectional
+Protocol            HTTP                                        WS (upgrade from HTTP)
+Use case            Notifications, token streaming              Chat, collaborative editing
+Browser reconnect   Automatic                                   Manual                             
+Best for Gen AI     Streaming LLM responses                     Interactive chat interfaces
+
+SSE:        Client ──── request ───→ Server
+                   ←─── stream ────
+
+WebSocket:  Client ←──── messages ────→ Server
+                   (both directions, anytime)

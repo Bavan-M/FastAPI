@@ -19,7 +19,7 @@ StreamingResponse — raw HTTP chunked transfer
 SSE (Server-Sent Events) — structured event stream, browser-native
 
 SSE = A way for a server to send automatic updates to a browser without the browser asking for them repeatedly.
-(ITS ALWAYS ONE WAY SERVER->CLIENT {means server is always in open and keeps on seding the responses})
+(ITS ALWAYS ONE WAY SERVER->CLIENT {means server is always in open and keeps on sending the responses})
 (ONE MORE IS TWO WAY SERVER<->CLIENT {Websocket which we will see in future})
 
 SSE:
@@ -56,3 +56,20 @@ Connection drops	            Auto-reconnects	                Stops forever
 Setup complexity	            Simple (just listen)	        Complex (build everything)
 Can send files	                No (text only)	                Yes (anything)
 Best for	                    Updates, notifications	        Downloads, raw data
+
+
+Pattern 1 — StreamingResponse plain text
+  Best for: simple text output, file downloads
+  Frontend: fetch() + ReadableStream
+
+Pattern 2 — OpenAI format (data: {json}\n\n)
+  Best for: drop-in OpenAI replacement
+  Frontend: fetch() + line parsing
+
+Pattern 3 — SSE named events
+  Best for: structured updates (progress, tokens, errors)
+  Frontend: EventSource or fetch() + event parsing
+
+Pattern 4 — Conditional stream/non-stream
+  Best for: single endpoint, client decides
+  Frontend: checks stream field in request
