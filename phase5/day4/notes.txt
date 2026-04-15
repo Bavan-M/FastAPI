@@ -1,0 +1,6 @@
+Day 4 — WebSocket Rooms, Connection Managers, Broadcasting
+What are we building today?
+Yesterday's ConnectionManager was simple — just a dict of connections. Today we build the production-grade version:
+Yesterday:  one global list of connections
+Today:      rooms, user presence, message history,
+            targeted broadcasting, admin controls

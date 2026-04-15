@@ -9,6 +9,7 @@ from datetime import datetime,timedelta,timezone
 from typing import Optional
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.responses import HTMLResponse
+import asyncio
 
 app=FastAPI(title="Websocket Auth")
 
@@ -93,7 +94,82 @@ async def ws_query_token(websocket:WebSocket,token:Optional[str]=Query(None)):
             )
     except WebSocketDisconnect:
         print(f"[WS] {user['username']} disconnected")
+
+
+# ============================================================
+# AUTH METHOD 2 — Token in first message
+# Connect → send auth message → authenticated
+# ============================================================
+
+@app.websocket("/ws/auth/first-message")
+async def wa_first_message(websocket:WebSocket):
+    await websocket.accept()
+
+    # Wait for auth message as first message
+    try:
+        auth_data=await asyncio.wait_for(
+            websocket.receive_json(),
+            timeout=5.0  # must auth within 5 seconds
+        )
+    except asyncio.TimeoutError:
+        await websocket.send_json({"type":"error","message":"Auth timeout"})
+        await websocket.close(code=4002,reason="Auth timeout")
+        return
+    if auth_data.get("type")!="auth" or not auth_data.get("token"):
+        await websocket.send_json({"type":"error","message":"Send auth message first"})
+        await websocket.close(code=4001)
+        return 
+    user=verify_token(token=auth_data["token"])
+    if not user:
+        await websocket.send_json({"type":"error","message":"Invalid token"})
+        await websocket.close(code=4001)
+        return 
+    await websocket.send_json({"type":"auth_success","user":user["username"]})
+    print(f"[WS] Authenticated via first message: {user['username']}")
+
+    try:
+        while True:
+            data=await websocket.receive_json()
+            await websocket.send_json({
+                "type":"message",
+                "from":user["username"],
+                "content":data.get("content")
+            })
+            print(data)
+    except WebSocketDisconnect:
+        print(f"[WS] {user['username']} disconnected")
+
+
+# ============================================================
+# AUTH METHOD 3 — Role-based WebSocket access
+# ============================================================
+@app.websocket("/ws/admin/stream")
+async def ws_admin_only(websocket:WebSocket,token:Optional[str]=Query(None)):
+    if not token:
+        await websocket.close(code=4001,reason="Token Required")
+        return 
+    user=verify_token(token)
+    if not user or user["role"]!="admin":
+        await websocket.close(code=4003,reason="Admin only")
+        return
+    await websocket.accept()
+    await websocket.send_json({"type":"system","message":f"Admin stream active for user {user["username"]}"})
     
+    try:
+        counter=0
+        while True:
+            counter+=1
+            await websocket.send_json({
+                "type":"admin_update",
+                "metric":"active_users",
+                "value":counter*10
+            })
+            await asyncio.sleep(1)
+    except WebSocketDisconnect:
+        print(f"[WS] Admin {user['username']} disconnected")
+
+
+
 
 @app.post("/auth/login")
 def login(from_data:OAuth2PasswordRequestForm=Depends()):
