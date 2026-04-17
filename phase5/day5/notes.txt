@@ -1,0 +1,37 @@
+Long Polling + Parallel LLM Calls + httpx
+
+Topic 1 — Long Polling 
+What is Long Polling?
+Regular polling (bad):
+Client → GET /updates every 1s → Server responds immediately (empty or not)
+Problem: 99% of responses are empty — wasteful
+
+Long polling (smart):
+Client → GET /updates → Server HOLDS the request until data is ready → responds
+Client → immediately sends another GET /updates → Server holds again
+Result: near-real-time updates without WebSockets
+
+When to use long polling vs WebSockets:
+                    Long Polling            WebSocket
+Setup               Simple HTTP             Requires WS upgrade
+Proxies/firewalls   Always works            Sometimes blocked
+Bidirectional       No                      Yes
+Best for            Simple notifications    Real-time chat
+
+You're right - for ChatGPT-style text generation, Stream Response is better; but for job status, progress updates, and any task taking >10 seconds, Long Polling (your EventQueue) is the RIGHT choice! 🎯
+Your EventQueue code is PERFECT for:
+✅ Image generation status
+✅ Video rendering progress
+✅ RAG pipeline steps
+✅ Document processing
+✅ Any long-running Gen AI task
+Just not for real-time token streaming (use SSE for that)!
+
+WHY httpx?
+requests library is SYNC — blocks event loop
+httpx is ASYNC — non-blocking, works with FastAPI perfectly
+from requests import get    ← blocks entire server
+from httpx import AsyncClient ← non-blocking ✅
+requests makes your server freeze while waiting for OpenAI → 100 users wait 300 seconds total
+httpx keeps your server responsive → 100 users wait only 3 seconds total
+Bottom line: Replace requests with httpx for calling external APIs. Ignore FastAPI's Request object entirely for your use case.

@@ -19,3 +19,6 @@ redis[asyncio]
 aioredis
 alembic
 websockets
+openai
+groq
+huggingface
