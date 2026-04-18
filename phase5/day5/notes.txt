@@ -35,3 +35,30 @@ from httpx import AsyncClient ← non-blocking ✅
 requests makes your server freeze while waiting for OpenAI → 100 users wait 300 seconds total
 httpx keeps your server responsive → 100 users wait only 3 seconds total
 Bottom line: Replace requests with httpx for calling external APIs. Ignore FastAPI's Request object entirely for your use case.
+
+Day 5 Checklist ✅
+Long Polling:
+
+ Client registers → gets client_id
+ Poll holds request until event arrives or timeout
+ Client immediately re-polls after response
+ Disconnect detection stops waiting cleanly
+ Job status polling works — progress updates visible
+
+Parallel LLM:
+
+ gather calls 3 LLMs simultaneously — total time = slowest, not sum
+ wait(FIRST_COMPLETED) returns winner, cancels rest
+ Individual timeouts — slow model doesn't block fast ones
+ RAG pipeline runs embed + vector + keyword + user context all in parallel
+ Document ingestion embeds all chunks simultaneously
+
+httpx:
+
+ Shared AsyncClient created in lifespan — connection pooling
+ raise_for_status() raises on 4xx/5xx
+ Retry with exponential backoff works
+ 4xx errors not retried — only 5xx
+ Circuit breaker opens after 3 failures
+ Circuit breaker moves to HALF_OPEN after recovery timeout
+ Streaming proxy works — forwards chunks from external API

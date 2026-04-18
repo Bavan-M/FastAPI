@@ -1,0 +1,82 @@
+Day 6 — Timeout Handling + Retry Logic + Circuit Breaker
+The Big Picture — why does this entire day matter?
+Your Gen AI API depends on external services you don't control:
+
+OpenAI goes down for 10 minutes
+Anthropic rate limits you at peak hours
+Your vector DB is slow under heavy load
+A network blip causes a 30 second hang
+
+Without the patterns from today, one slow LLM call can:
+
+Hang your entire server
+Exhaust your connection pool
+Cause a cascade of failures across your whole system
+
+Today you build the defensive layer that makes your API production-hardened.
+Without defenses:
+LLM slow → request hangs → connection pool exhausted → entire API down
+
+With today's patterns:
+LLM slow → timeout after 10s → retry once → circuit breaks → 
+fallback response → API still serving other users
+
+Topic 1 — Timeout Handling → 01_timeout_handling.py
+What is timeout handling?
+A timeout is a deadline you set on any operation. If it doesn't complete within that deadline, you cancel it and move on rather than waiting forever.
+Why it matters for Gen AI
+LLM APIs are notoriously unpredictable in latency:
+
+Normal response: 1-3 seconds
+Under load: 10-30 seconds
+Occasionally: hangs forever
+
+Without timeouts, one hanging LLM call occupies a worker slot forever. With 10 concurrent hanging requests, your server stops responding to everyone else.
+
+The mental model
+Without timeout:
+Request → LLM call → [waiting.....................forever] → server stuck
+
+With timeout:
+Request → LLM call → [waiting...10s] → TimeoutError → clean response
+                                                     → server free
+
+
+Different timeouts for different operations:
+DB query          →  2-5 seconds    (should be fast)
+Embedding call    →  5-10 seconds   (medium)
+LLM generation    →  30-60 seconds  (can be slow)
+File upload       →  60-120 seconds (depends on size)
+Health check      →  1-2 seconds    (must be instant)
+
+
+Topic 2 — Retry Logic → 02_retry_logic.py
+What is retry logic?
+When an external service fails, you automatically try again — with intelligent backoff so you don't make things worse.
+Why it matters for Gen AI
+LLM APIs fail in transient ways all the time:
+
+Rate limit hit → wait and retry
+Network blip → retry immediately
+503 overloaded → retry after 2 seconds
+500 internal error → retry once
+
+The key insight is not everything should be retried. A 401 Unauthorized means your API key is wrong — retrying 3 times just wastes time and money. A 429 Rate Limited means wait and try again.
+The mental model
+No retry:
+Attempt 1 → network blip fails → user gets error
+(the request would have succeeded if tried again!)
+
+With retry + backoff:
+Attempt 1 → fails → wait 0.5s
+Attempt 2 → fails → wait 1.0s
+Attempt 3 → succeeds ✅ → user gets response
+
+Exponential backoff prevents the thundering herd problem:
+Without backoff — 1000 clients all retry instantly:
+t=0s: 1000 requests → server overwhelmed → all fail
+t=0s: 1000 retries  → server overwhelmed → all fail again
+
+With exponential backoff:
+t=0.5s: 1000 requests spread out → server recovers
+t=1.0s: remaining retries → server handles fine
