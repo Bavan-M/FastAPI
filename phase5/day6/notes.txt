@@ -80,3 +80,91 @@ t=0s: 1000 retries  → server overwhelmed → all fail again
 With exponential backoff:
 t=0.5s: 1000 requests spread out → server recovers
 t=1.0s: remaining retries → server handles fine
+
+Topic 3 — Circuit Breaker → 03_circuit_breaker.py
+What is a Circuit Breaker?
+It's named after an electrical circuit breaker — the thing in your fuse box that cuts power when there's a fault, preventing damage.
+In software, when an external service (like OpenAI) is failing repeatedly, a circuit breaker stops sending requests to it for a period of time — instead of hammering a broken service with thousands of retries.
+Why it matters for Gen AI
+Imagine OpenAI has an outage for 5 minutes. Without a circuit breaker:
+10,000 users → 10,000 requests → each retries 3x → 30,000 calls to OpenAI
+→ OpenAI gets MORE traffic while already struggling → outage gets longer
+→ your server's thread pool exhausted → your API also goes down
+With a circuit breaker:
+First 5 failures → circuit OPENS
+Next 10,000 requests → immediately return "service unavailable"
+→ zero load on OpenAI → it recovers faster
+→ your server handles requests instantly (even if degraded)
+→ after 30s → circuit HALF-OPENS → tests if OpenAI recovered
+→ success → circuit CLOSES → back to normal
+The three states
+CLOSED (normal):
+  Requests go through normally
+  Failures are counted
+  If failures >= threshold → OPEN
+
+OPEN (broken):
+  Requests immediately return error
+  No calls to external service
+  After recovery_timeout → HALF_OPEN
+
+HALF_OPEN (testing):
+  Allow a few test requests through
+  If they succeed → CLOSED (recovered!)
+  If they fail → back to OPEN
+
+
+
+
+The Three Patterns Together
+Incoming request to your Gen AI API
+        ↓
+┌─────────────────────────────────────┐
+│         Circuit Breaker             │
+│  OPEN? → immediate error/fallback   │
+│  CLOSED/HALF_OPEN? → proceed        │
+└──────────────┬──────────────────────┘
+               ↓
+┌─────────────────────────────────────┐
+│           Timeout                   │
+│  Operation takes too long? → cancel │
+│  Each operation has its own budget  │
+└──────────────┬──────────────────────┘
+               ↓
+┌─────────────────────────────────────┐
+│           Retry Logic               │
+│  Transient failure? → wait + retry  │
+│  Permanent failure? → give up fast  │
+│  Rate limited? → wait longer        │
+└──────────────┬──────────────────────┘
+               ↓
+        External Service
+       (OpenAI, Pinecone...)
+
+Day 6 Checklist ✅
+Timeout Handling:
+
+ wait_for cancels slow operations cleanly
+ Different timeout budgets per operation type
+ Global request timeout middleware catches everything
+ DeadlineContext shares budget across operations
+ Fallback response returned when LLM times out
+
+Retry Logic:
+
+ Exponential backoff delays: 0.5s → 1s → 2s
+ Jitter prevents thundering herd
+ 4xx errors NOT retried — only 5xx and network errors
+ @retryable decorator works on any async function
+ Rate limit (429) retried with longer delay
+
+Circuit Breaker:
+
+ CLOSED → OPEN after 3 failures
+ OPEN → requests immediately blocked
+ OPEN → HALF_OPEN after recovery timeout
+ HALF_OPEN → CLOSED after 2 successes
+ HALF_OPEN → OPEN if still failing
+ Fallback to Anthropic when OpenAI circuit is OPEN
+ Registry manages multiple breakers for different services
+ Admin routes let you break/restore/reset services
