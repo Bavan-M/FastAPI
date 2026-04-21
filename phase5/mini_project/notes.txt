@@ -1,0 +1,40 @@
+What are we building?
+A production-ready Gen AI chat application backend that combines every concept from Phase 5:
+User opens browser
+    ↓
+WebSocket connection (bidirectional)
+    ↓
+User sends message
+    ↓
+Server calls LLM (with timeout + retry + circuit breaker)
+    ↓
+LLM response streams token by token back to user
+    ↓
+SSE broadcasts typing indicators to other users in same room
+    ↓
+Chat history stored per session
+    ↓
+Multiple rooms, auth, connection management
+
+
+Project Structure
+phase5/
+└── mini_project/
+    ├── main.py
+    ├── core/
+    │   ├── __init__.py
+    │   ├── config.py
+    │   └── resilience.py       ← timeout + retry + circuit breaker
+    ├── ws/
+    │   ├── __init__.py
+    │   ├── manager.py          ← connection + room management
+    │   └── handlers.py         ← message handling logic
+    ├── llm/
+    │   ├── __init__.py
+    │   └── client.py           ← LLM client with streaming
+    ├── sse/
+    │   ├── __init__.py
+    │   └── notifications.py    ← SSE event broadcasting
+    └── models/
+        ├── __init__.py
+        └── schemas.py
