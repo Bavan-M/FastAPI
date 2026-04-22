@@ -1,0 +1,63 @@
+Day 1 ✅ (done) — Structured logging + loguru + request ID tracing
+Day 2 — pytest + httpx + AsyncClient + mocking + integration tests + test coverage
+Day 3 — pydantic-settings + API versioning (/v1, /v2) + graceful shutdown handling
+Day 4 — Dockerizing FastAPI + multi-stage builds + caching strategies (response cache, query cache)
+Day 5 — Docker Compose (FastAPI + Postgres + Redis + Nginx) + rate limiting with slowapi + health check / readiness / liveness endpoints
+Day 6 — OpenTelemetry (distributed tracing + metrics) + Mini Project: fully production-ready dockerized API
+
+
+Day 1 — Structured Logging with Loguru
+Why not just use print()?
+Throughout Phase 1-5 we've been using print() for debugging. In production this is a serious problem:
+# print() — what we've been doing ❌
+print(f"User alice called /generate")
+print(f"LLM took 2.3 seconds")
+print(f"Error: timeout")
+
+# Problems:
+# → No timestamps
+# → No log levels (can't filter errors from info)
+# → No structure (can't search/query logs)
+# → No file output (logs disappear when process restarts)
+# → No request ID (can't trace one request through all its logs)
+
+Structured logging fixes all of this:
+{"time": "2026-03-06 10:23:11", "level": "INFO",  "request_id": "abc-123", "user": "alice", "path": "/generate", "duration_ms": 2300, "message": "LLM generation complete"}
+{"time": "2026-03-06 10:23:45", "level": "ERROR", "request_id": "xyz-789", "user": "bob",   "path": "/generate", "error": "timeout", "message": "LLM timed out after 10s"}
+
+Now you can:
+
+Filter: level=ERROR → see only errors
+Search: user=alice → see all of Alice's requests
+Trace: request_id=abc-123 → follow one request through every log line
+Alert: level=CRITICAL → page the on-call engineer
+Dashboard: aggregate duration_ms → see average latency over time
+
+Why Loguru over Python's built-in logging?
+Python's built-in logging module works but requires 20+ lines of boilerplate to configure properly. Loguru gives you the same power in 2 lines with a much cleaner API.
+# Built-in logging — painful ❌
+import logging
+logger = logging.getLogger(__name__)
+handler = logging.StreamHandler()
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+logger.setLevel(logging.DEBUG)
+
+# Loguru — clean ✅
+from loguru import logger
+logger.info("Done in 2 lines")
+
+
+Topic 2 — Structured Logging → 02_structured_logging.py
+What is structured logging?
+Plain text logs are hard to search and analyze:
+2026-03-06 10:23:11 - INFO - User alice called /generate took 2.3s used 1500 tokens
+
+Structured logs are JSON — every piece of data is a queryable field:
+{"time": "2026-03-06T10:23:11", "level": "INFO", "user": "alice", "path": "/generate", "duration_ms": 2300, "tokens": 1500}
+
+With structured logs you can query in tools like Datadog, Grafana, CloudWatch:
+tokens > 1000 AND user = alice → find Alice's expensive requests
+duration_ms > 5000 → find slow requests
+level = ERROR AND path = /generate → find all generation failures

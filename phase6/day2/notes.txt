@@ -1,0 +1,30 @@
+Day 2 — Testing with pytest + httpx + AsyncClient
+Why testing matters so much for Gen AI APIs?
+Without tests, every deployment is a gamble:
+
+Did the auth middleware break after that refactor?
+Does the streaming endpoint still work?
+Does the circuit breaker actually trip after 3 failures?
+
+With tests, you know before deploying. The key insight for FastAPI is:
+Regular pytest     → sync code only
+pytest-asyncio     → async code (FastAPI routes are async)
+httpx AsyncClient  → test HTTP endpoints without running a server
+Mocking            → replace LLM calls with fake responses (fast + free)
+Coverage           → find untested code before it bites you in production
+
+The mental model
+Your FastAPI app
+      ↓
+AsyncClient (fake HTTP client — no real server needed)
+      ↓
+Your routes execute with mocked dependencies
+      ↓
+Assert the response is what you expect
+      ↓
+If assertion fails → bug caught before production ✅
+
+
+Step 2 — Test Infrastructure → tests/conftest.py
+What is conftest.py?
+It's pytest's shared fixture file. Fixtures defined here are automatically available to every test file without importing. Think of it as the setup that runs before your tests.

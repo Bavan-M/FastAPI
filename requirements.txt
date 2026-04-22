@@ -22,3 +22,8 @@ websockets
 openai
 groq
 huggingface
+loguru
+pytest
+pytest-asyncio
+httpx
+pytest-cov
