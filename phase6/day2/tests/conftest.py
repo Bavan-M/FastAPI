@@ -83,7 +83,7 @@ async def auth_client(app):
     async with AsyncClient(
         transport=ASGITransport(app=app),
         base_url="http://test",
-        headers={"Authorization","Bearer token-bob"}
+        headers={"Authorization":"Bearer token-alice"}
     ) as client:
         yield client
     
@@ -105,7 +105,7 @@ async def admin_client(app):
 
 
 @pytest_asyncio.fixture
-async def admin_client(app):
+async def user_client(app):
     """Client pre-configured with regular user token"""
     app.dependency_overrides[get_llm_service]=lambda : MockLLMService()
 
@@ -130,7 +130,7 @@ def reset_db():
     # Save original state
     original_users=dict(deps.users_db)
     original_items=dict(deps.items_db)
-    original_counter=dict(deps.item_counter)
+    original_counter=int(deps.item_counter)
 
     yield # test runs here
 

@@ -1,0 +1,48 @@
+Topic 1 — pydantic-settings → 01_pydantic_settings.py
+What is pydantic-settings and why does it matter?
+Every production application has configuration that changes between environments:
+Development:  DATABASE_URL=sqlite:///dev.db,  DEBUG=true,  LOG_LEVEL=debug
+Staging:      DATABASE_URL=postgres://staging, DEBUG=false, LOG_LEVEL=info
+Production:   DATABASE_URL=postgres://prod,    DEBUG=false, LOG_LEVEL=warning
+
+Without proper config management you end up with hardcoded values scattered across files — changing one thing for production means hunting through 20 files. 
+Worse, secrets like API keys end up committed to git.
+pydantic-settings solves this by:
+
+Loading config from environment variables and .env files automatically
+Validating every config value with Pydantic — wrong type = app refuses to start
+Providing a single source of truth for all settings
+Making secrets impossible to accidentally hardcode
+
+The mental model
+.env file  ──┐
+             ├──→ pydantic-settings validates + parses ──→ settings object
+Environment ─┘                                              imported everywhere
+
+Wrong type?    → ValidationError at startup → fix before deploying
+Missing secret? → ValidationError at startup → can't accidentally deploy without it
+
+
+
+Topic 2 — API Versioning → 02_api_versioning.py
+Why version your API?
+Your API is consumed by clients you don't control — mobile apps, third-party integrations, other services. When you change your API:
+Without versioning:
+You change /users response format
+→ every client breaks immediately
+→ angry users, broken integrations
+
+With versioning:
+You add /api/v2/users with new format
+→ v1 still works for old clients
+→ new clients use v2
+→ you deprecate v1 after 6 months with warning headers
+→ zero broken clients
+
+The three main strategies
+URL versioning:     /api/v1/users  /api/v2/users  ← most common, obvious
+Header versioning:  Accept: application/vnd.api+json;version=2  ← cleaner URLs
+Query versioning:   /users?version=2  ← easiest but messy
+
+URL versioning is the industry standard — OpenAI uses it (/v1/), Stripe uses it (/v1/), Anthropic uses it (/v1/).
+

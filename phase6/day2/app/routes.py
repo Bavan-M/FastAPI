@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime,timezone
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, Request
 from app.models import (
@@ -30,7 +30,7 @@ async def register(data: UserCreate):
         "username":   data.username,
         "email":      data.email,
         "role":       "user",
-        "created_at": datetime.utcnow()
+        "created_at": datetime.now(timezone.utc).isoformat()
     }
     users_db[f"token-{data.username}"] = user
     return user
@@ -38,7 +38,7 @@ async def register(data: UserCreate):
 
 @router.get("/auth/me", response_model=UserResponse)
 async def get_me(current_user: dict = Depends(get_current_user)):
-    return {**current_user, "created_at": datetime.utcnow()}
+    return {**current_user, "created_at": datetime.now(timezone.utc).isoformat()}
 
 
 # --- LLM ---
@@ -49,17 +49,20 @@ async def generate(
     current_user: dict = Depends(get_current_user),
     llm:         object = Depends(get_llm_service)
 ):
-    request_id = getattr(request.state, "request_id", "test")
+    try:
+        request_id = getattr(request.state, "request_id", "test")
 
-    result = await llm.generate(req.prompt, req.model, req.max_tokens)
+        result = await llm.generate(req.prompt, req.model, req.max_tokens)
 
-    return {
-        "prompt":      req.prompt,
-        "response":    result["response"],
-        "model":       result["model"],
-        "tokens_used": result["tokens_used"],
-        "request_id":  request_id
-    }
+        return {
+            "prompt":      req.prompt,
+            "response":    result["response"],
+            "model":       result["model"],
+            "tokens_used": result["tokens_used"],
+            "request_id":  request_id
+        }
+    except Exception as e:
+        raise HTTPException(status_code=503, detail="LLM service temporarily unavailable")
 
 
 @router.get("/llm/status")
@@ -81,7 +84,7 @@ async def create_item(
         "description": item.description,
         "price":       item.price,
         "owner_id":    current_user["id"],
-        "created_at":  datetime.utcnow()
+        "created_at":  datetime.now(timezone.utc).isoformat()
     }
     items_db[item_counter] = new_item
     item_counter += 1

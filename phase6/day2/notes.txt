@@ -28,3 +28,72 @@ If assertion fails → bug caught before production ✅
 Step 2 — Test Infrastructure → tests/conftest.py
 What is conftest.py?
 It's pytest's shared fixture file. Fixtures defined here are automatically available to every test file without importing. Think of it as the setup that runs before your tests.
+Why This Name?
+conftest.py = Configuration for tests
+Pytest hardcodes this name - it's not configurable.
+
+Step 3 — Basic Tests → tests/01_basic_tests.py
+The anatomy of a good test
+Every test follows AAA pattern:
+Arrange — set up test data
+Act — call the endpoint
+Assert — verify the response
+
+mark = A label/tag you attach to a test to give it special behavior or metadata.
+ Mark	                  What It Does
+ @pytest.mark.asyncio	Run test with async event loop
+ @pytest.mark.skip	Skip this test entirely
+ @pytest.mark.slow	Mark test as slow (can run separately)
+ @pytest.mark.xfail	Expect this test to fail
+
+
+ Step 4 — Async Tests → tests/02_async_tests.py
+Why async tests?
+FastAPI routes are async. If you test them with regular sync pytest, you miss concurrency bugs. 
+pytest-asyncio runs your tests in an event loop so you can await just like in real code.
+
+
+Step 5 — Mocking + Coverage → tests/03_mocking_and_coverage.py
+What is mocking?
+Mocking replaces a real dependency with a fake one that you control. This is essential for testing Gen AI APIs because:
+Without mocking:
+- Tests call real OpenAI → costs money
+- Tests are slow (network latency)
+- Tests are flaky (network failures)
+- Tests depend on external state
+
+With mocking:
+- Tests use fake LLM → free
+- Tests run in milliseconds
+- Tests always pass/fail consistently
+- Tests are fully deterministic
+
+Is your test checking AUTHENTICATION?
+│
+├─ YES → Testing invalid token, no token, expired token?
+│        └─ Use `client` (add headers manually)
+│
+└─ NO → Your test needs a LOGGED-IN user?
+         │
+         ├─ YES → Use `auth_client` (already has valid token)
+         │
+         └─ NO → Testing PUBLIC endpoint (no auth needed)?
+                  └─ Use `client` (no headers at all)
+
+
+# Run all tests
+pytest phase6/day2/tests/ -v
+
+# Run specific file
+pytest phase6/day2/tests/01_basic_tests.py -v
+
+# Run specific test
+pytest phase6/day2/tests/01_basic_tests.py::test_register_success -v
+
+# Run with coverage report
+pytest phase6/day2/tests/ -v --cov=phase6/day2/app --cov-report=term-missing
+
+# Run with HTML coverage report (open in browser)
+pytest phase6/day2/tests/ --cov=phase6/day2/app --cov-report=html
+# → open htmlcov/index.html
+start htmlcov\index.html
