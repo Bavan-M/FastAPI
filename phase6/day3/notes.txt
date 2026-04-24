@@ -46,3 +46,115 @@ Query versioning:   /users?version=2  ← easiest but messy
 
 URL versioning is the industry standard — OpenAI uses it (/v1/), Stripe uses it (/v1/), Anthropic uses it (/v1/).
 
+Topic 3 — Graceful Shutdown → 03_graceful_shutdown.py
+What is graceful shutdown and why does it matter?
+When your server receives a shutdown signal (SIGTERM from Docker, Kubernetes, or Ctrl+C), two things can happen:
+Abrupt shutdown (bad):
+SIGTERM received
+→ server killed immediately
+→ 50 in-flight LLM requests cancelled mid-response
+→ 10 background tasks writing to DB killed mid-write
+→ DB connections leaked
+→ clients get connection reset errors
+→ partial data written to DB
+
+Graceful shutdown (good):
+SIGTERM received
+→ stop accepting new requests (return 503)
+→ wait for in-flight requests to complete
+→ finish background tasks
+→ close DB connections cleanly
+→ close Redis connections cleanly
+→ log "shutdown complete"
+→ exit cleanly
+
+This matters especially for Gen AI because LLM calls take 5-30 seconds. 
+Without graceful shutdown, every deployment kills active users' generations.
+
+Story on Gracefule shutdownFMCG App Story: Smart Inventory Management 🏪
+Business Scenario
+A snacks and drinks e-commerce app that:
+Sells chips, sodas, chocolates (FMCG products)
+Has 1000 customers ordering every minute
+Syncs with 5 warehouses across the city
+
+CHAPTER 1: App Starting Up (Morning 8:00 AM)
+What happens when you run uvicorn main:app
+8:00:00 AM - The Start
+App wakes up like a store manager opening the shop
+8:00:01 AM - Connecting to Resources (happens at same time)
+Database pool = Booking 10 cash counters for customers to checkout
+Redis = Setting up fast-storage shelf for hot-selling items (like keeping Coke near the counter)
+8:00:02 AM - Starting Background Worker
+Auto-reorder robot wakes up
+Will check stock every 5 minutes
+Will order more chips when stock < 50 packets
+Will sync with warehouse inventory
+8:00:02 AM - App Ready
+Store is OPEN for business
+
+CHAPTER 2: Normal Operations (8:00 AM - 8:30 PM)
+What Happens During Normal Operation
+Customer places an order:
+App processes the request
+Takes a few seconds (simulating LLM/database work)
+Background worker does its job silently:
+Heartbeat #1 (8:05 AM) - checked stock, everything fine
+Heartbeat #2 (8:10 AM) - still good
+Heartbeat #3 (8:15 AM) - chips stock low! Auto-order triggered
+Customer starts a background task:
+Example: Generating bulk sales report
+Takes 5 minutes to complete
+App tracks this task
+Customer checks status:
+See active requests, pending tasks, uptime
+
+CHAPTER 3: Shutdown Signal (8:30 PM - Store Closing)
+IT Team sends graceful shutdown signal
+8:30:00 PM - Shutdown Initiated
+Manager puts up "CLOSED" sign on the door
+No longer accepting new requests
+What happens to new requests?
+Customer tries to order after shutdown:
+Gets 503 Service Unavailable
+Message: "Server is shutting down. Please retry."
+Waiting for Existing Customers (30 second grace period)
+Timeline:
+8:30:00 - 2 customers still shopping
+8:30:03 - Customer 1 finishes → 1 remains
+8:30:05 - Customer 2 finishes → 0 remains
+Message: "All requests completed"
+Waiting for Background Tasks
+Background report task still running
+App waits for it to complete
+Report finishes at 8:30:10
+No data lost
+
+Shutting Down Workers and Connections
+8:30:10 PM - Stop background worker
+Auto-reorder robot powers down
+8:30:11 PM - Close connections
+Database pool closes cleanly
+Redis closes cleanly
+No data corruption
+8:30:12 PM - Complete
+Shutdown finished successfully
+What If a Customer Takes Too Long? (Timeout Scenario)
+If a customer takes more than 30 seconds:
+App waits for 30 seconds
+At 30 seconds: "⚠️ Forcing shutdown — 1 requests still active"
+Forces shutdown
+But with FMCG orders - Most finish within 2-3 seconds, so this rarely happens
+
+Health Check Story (Kubernetes Watching)
+K8s Acts Like a Security Guard
+Every 10 seconds, K8s asks:
+GET /health → "Are you alive?" → "Yes" (200 OK)
+Before sending traffic, K8s asks:
+GET /ready → "Can you take orders?" → "Yes" (if database and Redis are connected)
+During shutdown, K8s asks:
+GET /ready → 503 Service Unavailable → "No, we're closing"
+K8s stops sending new customers
+During startup, K8s asks:
+GET /startup → "Are you ready?" → "Not yet, still starting..."
+
