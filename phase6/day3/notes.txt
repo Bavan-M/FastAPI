@@ -158,3 +158,33 @@ K8s stops sending new customers
 During startup, K8s asks:
 GET /startup → "Are you ready?" → "Not yet, still starting..."
 
+Day 3 Checklist ✅
+pydantic-settings:
+
+ SecretStr used for passwords and API keys
+ App refuses to start with weak secret key
+ Production validator rejects SQLite and DEBUG=true
+ @lru_cache() means .env read only once
+ get_settings.cache_clear() works in tests
+ /config/info never exposes secret values
+ .env.example generated for new developers
+
+API Versioning:
+
+ /api/v1/ and /api/v2/ both work independently
+ V1 response headers contain deprecation warning
+ V2 returns richer response with new fields
+ Header-based versioning works with X-API-Version
+ /api/v1/version reports deprecated status
+ /api/v2/version reports stable status
+
+Graceful Shutdown:
+
+ /health always returns 200 (liveness)
+ /ready returns 503 during startup and shutdown (readiness)
+ /startup returns 503 until initialization complete
+ New requests rejected with 503 during shutdown
+ Active request count tracked correctly
+ Shutdown waits for in-flight requests (up to 30s)
+ Background tasks tracked and awaited on shutdown
+ DB and Redis connections closed cleanly

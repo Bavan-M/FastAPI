@@ -1,0 +1,260 @@
+Day 4 — Dockerizing FastAPI + Multi-stage Builds + Caching Strategies
+
+What is Docker and why does it matter?
+Without Docker, deploying your app is a nightmare:
+Developer's machine:  Python 3.12, OpenSSL 3.0, works fine ✅
+Staging server:       Python 3.10, OpenSSL 1.1, crashes ❌
+Production server:    Python 3.11, different OS, maybe works? 🤷
+
+With Docker:
+Every environment runs the EXACT same container image
+Developer, staging, production → identical → no surprises
+
+Docker packages your app + all its dependencies + runtime into a single image that runs identically everywhere.
+It's the foundation of modern deployment.
+
+The mental model
+Dockerfile  →  docker build  →  Image (blueprint)
+                                    ↓
+                              docker run  →  Container (running instance)
+
+==================================================================================================================================================
+
+WITHOUT Multi-Stage (Single Stage)
+Step 1: Start with Base Image
+    FROM python:3.12
+What you get: A complete Ubuntu Linux + Python 3.12
+Contents of python:3.12 image (~900 MB):
+Ubuntu Linux OS:
+├── /bin/bash (command line)
+├── /usr/bin/gcc (C compiler)
+├── /usr/bin/make (build tool)
+├── /usr/lib/python3.12/ (Python)
+├── /usr/local/lib/python3.12/site-packages/ (empty now)
+├── apt package manager
+├── wget, curl, git
+├── headers files (.h files for compiling)
+├── libc, libssl, libz (system libraries)
+└── MANY system tools you don't need
+
+Step 2: Copy requirements.txt
+COPY requirements.txt .
+Now image has: Same as above + your requirements.txt file
+
+Step 3: Install Python Packages
+RUN pip install -r requirements.txt
+What pip install DOES behind the scenes:
+pip install numpy
+    ↓
+1. Downloads numpy source code (because many packages need compilation)
+2. Calls gcc compiler to compile C code
+3. Creates .so files (compiled binaries)
+4. Installs into site-packages
+
+pip install pandas
+    ↓
+1. Downloads pandas (which also needs compilation)
+2. Compiles with gcc
+3. Installs
+
+pip install cryptography
+    ↓
+1. Downloads cryptography (needs OpenSSL headers)
+2. Compiles with gcc and links against OpenSSL
+3. Installs
+
+What gets LEFT BEHIND after pip install:
+/root/.cache/pip/  ← 200 MB of downloaded package files (NEVER deleted!)
+/usr/bin/gcc       ← Compiler (still there!)
+/usr/include/      ← C headers (still there!)
+/usr/lib/*.a       ← Static libraries (still there!)
+/tmp/pip-build-*   ← Temporary build files (some remain!)
+
+Step 4: Copy Your Code
+COPY . .
+
+Now image has: Everything above + your app code
+Step 5: Final Image Contents
+Your 1.2 GB image contains:
+
+===========================================================================================================================================================
+What Happens WITH Multi-Stage
+
+Stage 1: Builder (Temporary, will be DISCARDED)
+FROM python:3.12 AS builder
+COPY requirements.txt .
+RUN pip install --user -r requirements.txt
+
+Same as single stage so far! Here's what's different:
+Key difference: --user flag
+
+pip install --user -r requirements.txt
+This installs packages to /root/.local/ instead of system Python location.
+What's in /root/.local/ after install:
+/root/.local/
+└── lib/
+    └── python3.12/
+        └── site-packages/
+            ├── numpy/
+            ├── pandas/
+            ├── cryptography/
+            └── (all your packages)
+This entire stage (builder) is marked for deletion. It will NOT be in final image.
+
+Stage 2: Runner (The Final Image)
+FROM python:3.12-slim
+python:3.12-slim is ONLY ~120 MB! What's in it:
+slim image (120 MB):
+├── Python runtime (interpreter)
+├── Essential system libraries (libc, libssl, libz) - RUNTIME only
+├── Basic Linux OS (no compilers!)
+└── NOTHING ELSE!
+
+What's MISSING from slim:
+❌ No gcc compiler
+❌ No pip cache  
+❌ No build tools
+❌ No C headers
+❌ No apt cache
+❌ No git, curl, wget
+
+Critical Line: Copy Packages from Builder
+COPY --from=builder /root/.local /root/.local
+
+This is MAGIC! It copies ONLY the installed packages, NOT the build tools.
+What gets copied:
+From builder: /root/.local/ (200 MB)
+    ↓
+To runner: /root/.local/ (200 MB)
+
+What does NOT get copied:
+- gcc compiler (120 MB) ← stays in builder, gets deleted
+- pip cache (200 MB) ← stays in builder, gets deleted
+- C headers (80 MB) ← stays in builder, gets deleted
+- Build tools (150 MB) ← stays in builder, gets deleted
+
+Copy Your Code
+COPY . .
+
+Final Runner Image Contents
+Your 180 MB image contains:
+
+=========================================================================================================================================================================================
+
+docker build starts
+    │
+    ├─→ Create Container 1 (FROM python:3.12)
+    │       ├─ Install base OS
+    │       ├─ Save as layer
+    │       └─ DELETE Container 1
+    │
+    ├─→ Create Container 2 (COPY requirements.txt)
+    │       ├─ Start from layer 1
+    │       ├─ Copy file
+    │       ├─ Save as layer
+    │       └─ DELETE Container 2
+    │
+    ├─→ Create Container 3 (RUN pip install)
+    │       ├─ Start from layer 2
+    │       ├─ Install packages
+    │       ├─ Compile numpy (gcc runs here!)
+    │       ├─ Create /root/.local/
+    │       ├─ Save as layer
+    │       └─ DELETE Container 3
+    │
+    ├─→ Create Container 4 (FROM python:3.12-slim)
+    │       ├─ Start fresh slim image
+    │       ├─ Save as layer
+    │       └─ DELETE Container 4
+    │
+    ├─→ Create Container 5 (COPY --from=builder)
+    │       ├─ Start from layer 4
+    │       ├─ Copy /root/.local/ from layer 3
+    │       ├─ Save as layer
+    │       └─ DELETE Container 5
+    │
+    ├─→ Create Container 6 (COPY . .)
+    │       ├─ Start from layer 5
+    │       ├─ Copy your app code
+    │       ├─ Save as layer
+    │       └─ DELETE Container 6
+    │
+    └─→ Final image saved (all layers combined)
+
+All 6 containers are DELETED immediately after their job is done!
+Only the final IMAGE remains on your computer.
+
+What Remains After docker build
+Your computer:
+├── Docker Image (final)
+│   ├── Layer 1: Base OS (python:3.12-slim)
+│   ├── Layer 2: Compiled packages (from builder)
+│   ├── Layer 3: Your code
+│   └── Total: 180 MB
+│
+└── NO temporary containers! (all deleted)
+
+The compiled packages are now PERMANENTLY inside the image.
+Your Hard Drive:
+    └── Image (180 MB) ← Just sitting there
+
+When you run: docker run my-app
+
+    ↓
+
+Docker:
+    1. Reads image from hard drive
+    2. Loads it into RAM
+    3. Starts a CONTAINER (running process)
+    4. Your app starts inside container
+
+Result: A LIVE, RUNNING container
+
+Step 1: docker build
+    Creates IMAGE → Saves to HARD DRIVE (not RAM)
+    Example: C:\ProgramData\Docker\...\my-image
+
+Step 2: docker run
+    Docker says: "I need to run this image"
+    
+    Sub-step 1: READ image from HARD DRIVE
+    Sub-step 2: LOAD it into RAM
+    Sub-step 3: START the process (this IS the container)
+    
+    Result: CONTAINER running in RAM
+
+Image on hard drive	====> Image (dormant)
+Image loaded into RAM + RUNNING	  ======> Container (alive)
+
+===========================================================================================================================================================================
+
+Topic 3 — Development Dockerfile → Dockerfile.dev
+Why a separate dev Dockerfile?
+Production image is optimized for size and security — no dev tools, no hot reload, runs as non-root. Development needs the opposite — hot reload, debugging tools, writable filesystem.
+
+==========================================================================================================================================================================
+
+Topic 4 — .dockerignore → .dockerignore
+Why .dockerignore matters
+.dockerignore prevents files from being sent to Docker's build context. Without it, Docker copies your entire project — including .git (hundreds of MB), virtual environments, test files, and secrets.
+
+
+=================================================================================================================================================================================
+Topic 5 — Caching Strategies → 01_caching_strategies.py
+What is caching and why does it matter for Gen AI?
+LLM calls are slow (1-10 seconds) and expensive ($0.01-0.10 per call). Many requests ask similar questions. Caching stores the result of expensive operations and returns it instantly on repeat requests.
+Without cache:
+User 1: "What is RAG?" → LLM call (2s, $0.02) → response
+User 2: "What is RAG?" → LLM call (2s, $0.02) → response  ← wasteful!
+User 3: "What is RAG?" → LLM call (2s, $0.02) → response  ← wasteful!
+
+With cache:
+User 1: "What is RAG?" → LLM call (2s, $0.02) → response → STORED in cache
+User 2: "What is RAG?" → cache HIT (1ms, $0.00) → response  ← instant!
+User 3: "What is RAG?" → cache HIT (1ms, $0.00) → response  ← instant!
+
+Cache levels — from fastest to slowest
+In-memory (dict)  →  1ms   → lost on restart, not shared between instances
+Redis             →  2ms   → survives restart, shared between all instances
+PostgreSQL        →  5ms   → queryable, persistent, but slower
+CDN               →  10ms  → for public, static responses

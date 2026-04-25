@@ -1,0 +1,48 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Virtual environments — NEVER copy these
+venv/
+env/
+.env/
+.venv/
+
+# Secrets — NEVER put in Docker image
+.env
+.env.*
+*.key
+*.pem
+
+# Git
+.git/
+.gitignore
+
+# Development tools
+.vscode/
+.idea/
+*.swp
+
+# Test files
+tests/
+test_*.py
+
+# Docker files themselves
+Dockerfile*
+docker-compose*.yml
+
+# Docs and README
+*.md
+docs/
+
+# Logs
+logs/
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db

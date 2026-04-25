@@ -1,0 +1,99 @@
+# ============================================================
+# BUILD
+# ============================================================
+
+# Build production image
+docker build -t genai-api:latest .
+
+# Build with specific tag
+docker build -t genai-api:1.0.0 .
+
+# Build dev image
+docker build -f Dockerfile.dev -t genai-api:dev .
+
+# Build with build args
+docker build --build-arg ENV=staging -t genai-api:staging .
+
+# See image size (multi-stage vs single)
+docker images genai-api
+
+
+# ============================================================
+# RUN
+# ============================================================
+
+# Run production
+docker run -d \
+  --name genai-api \
+  -p 8000:8000 \
+  -e ENV=production \
+  -e SECRET_KEY=your-secret-key-here-32-chars \
+  -e DATABASE_URL=postgresql+asyncpg://user:pass@host/db \
+  genai-api:latest
+
+# Run dev with hot reload (mount code as volume)
+docker run -d \
+  --name genai-api-dev \
+  -p 8000:8000 \
+  -v $(pwd)/app:/app/app \
+  -e ENV=development \
+  genai-api:dev
+
+# Run with .env file
+docker run -d \
+  --name genai-api \
+  -p 8000:8000 \
+  --env-file .env \
+  genai-api:latest
+
+
+# ============================================================
+# MANAGE
+# ============================================================
+
+# See running containers
+docker ps
+
+# See logs
+docker logs genai-api
+docker logs -f genai-api    # follow (live)
+
+# Execute command inside container
+docker exec -it genai-api bash
+docker exec -it genai-api python -c "import fastapi; print(fastapi.__version__)"
+
+# Stop / start / restart
+docker stop genai-api
+docker start genai-api
+docker restart genai-api
+
+# Remove container
+docker rm genai-api
+docker rm -f genai-api      # force stop then remove
+
+
+# ============================================================
+# INSPECT
+# ============================================================
+
+# Container stats (CPU, memory, network)
+docker stats genai-api
+
+# Container details
+docker inspect genai-api
+
+# Health check status
+docker inspect --format='{{.State.Health.Status}}' genai-api
+
+# ============================================================
+# CLEANUP
+# ============================================================
+
+# Remove unused images, containers, networks
+docker system prune
+
+# Remove all stopped containers
+docker container prune
+
+# Remove unused images
+docker image prune
