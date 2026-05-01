@@ -13,3 +13,4 @@ wheels/
 logs/
 .coverage
 certs/
+.env.example

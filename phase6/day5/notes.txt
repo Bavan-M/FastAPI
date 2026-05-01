@@ -1,0 +1,254 @@
+Topic 1 — Rate Limiting → 01_rate_limiting.py
+What is rate limiting and why does it matter for Gen AI?
+Rate limiting controls how many requests a client can make in a given time window. Without it:
+Without rate limiting:
+One angry user → 10,000 requests/minute to your LLM endpoint
+→ $500 OpenAI bill in minutes
+→ all other users get 503 (server overwhelmed)
+→ your API is unusable
+
+With rate limiting:
+Same user → 10,000 requests/minute
+→ first 60 allowed → rest get 429 Too Many Requests
+→ OpenAI bill stays reasonable
+→ all other users unaffected
+
+The different strategies
+Fixed window:   Count requests in fixed 1-minute blocks
+                Simple but has "burst" problem at window boundaries
+
+Sliding window: Count requests in last 60 seconds from NOW
+                Smoother, prevents boundary bursts
+
+Token bucket:   Each user has N tokens, refilled at rate R
+                Most flexible — allows short bursts then throttles
+
+Per-user:       Different limits for free/pro/enterprise users
+                Most realistic for Gen AI APIs
+
+====================================================================================================================================================================
+
+Topic 2 — Health Endpoints → 02_health_endpoints.py
+The three health endpoint types
+In production with Kubernetes or Docker Swarm, three different probes serve three different purposes:
+Liveness  (/health) → "Is the app process alive?"
+  → If NO: Kubernetes restarts the container
+  → Should ALWAYS return 200 unless process is completely hung
+  → Never return 503 just because DB is slow
+
+Readiness (/ready)  → "Can the app serve traffic right now?"
+  → If NO: Kubernetes removes pod from load balancer rotation
+  → Return 503 if DB is down, Redis is down, or still starting
+  → Return 200 only when fully ready to handle requests
+
+Startup   (/startup) → "Has the app finished initializing?"
+  → Kubernetes waits for this before starting liveness/readiness
+  → Critical for apps that load ML models on startup (can take 30s+)
+  → Once it returns 200, Kubernetes switches to liveness/readiness
+
+
+=============================================================================================================================================================
+
+Topic -3
+The Problem: FastAPI/Uvicorn alone is NOT enough for production
+Think of Uvicorn/FastAPI as a race car engine — very powerful for its specific job (running Python code), but terrible at:
+Driving on public roads
+Carrying luggage
+Protecting passengers
+Nginx is like the car body, suspension, and safety systems — it handles everything around the engine.
+
+What Nginx does that FastAPI cannot
+Feature	                    FastAPI/Uvicorn	                Nginx
+SSL/HTTPS	                  Very slow in Python	            Extremely fast (C code)
+Static files (images, CSS)	Slow	                          Lightning fast
+Gzip compression	          CPU-heavy on Python	            Optimized C implementation
+Rate limiting	              After Python process starts	    Before request hits Python
+Load balancing	            ❌ Cannot	                    ✅ Expert at it
+Connection limiting	        ❌ Hard	                      ✅ Built-in
+Caching	                    ❌ Would need Redis	          ✅ Built-in
+Slow client protection	    ❌ Can be DoS'd	              ✅ Handles gracefully
+
+============================================================================================================================================================================
+Docker Compose
+What ->	A YAML file that defines and runs multiple containers together as a single application
+Why -> 	Your app needs more than just itself (database, Redis, Nginx). Compose runs everything together with one command
+How	-> Define all services in docker-compose.yml, then run docker-compose up -d
+
+
+Dockerfile vs Docker Compose
+                      Dockerfile	                        docker-compose.yml
+What	                Recipe to build ONE container	      Instructions to run MANY containers
+Analogy	              Cake recipe	                        Wedding assembly instructions (cake + frosting + decorations + plates)
+Number of containers	1	                                  Multiple (app, DB, Redis, Nginx...)
+When to use	          Always (needed for your app)	      When app has multiple dependencies
+
+
+What Compose Adds That Dockerfile Can't
+Feature	                               Dockerfile only	          Docker Compose
+Run multiple containers	              ❌ Need separate commands	✅ One command
+Automatic networking	                ❌ Manual setup	          ✅ Auto
+Restart on crash	                    ❌ Manual	                ✅ Auto
+Service dependencies (start DB first)	❌ Manual order	          ✅ depends_on
+See all logs together	                ❌ Separate terminals	    ✅ docker-compose logs
+One command for everything	          ❌ Script needed	          ✅ docker-compose up
+
+
+Without vs With Compose
+Task	                  Without Compose	        With Compose
+Start everything	      5+ commands in order	  docker-compose up -d
+Stop everything	        Kill each container	    docker-compose down
+See logs	              docker logs × 4	        docker-compose logs -f
+After code change	      Rebuild, stop, restart	docker-compose up -d --build
+
+
+The Critical Point
+Dockerfile      +    docker-compose.yml    =    Complete Application
+     ↑                      ↑                        ↑
+  Builds your           Runs everything        Database + Redis +
+  app container         together               Nginx + Your app
+
+
+============================================================================================================================================================================
+i have one doubt if the dev has done some changes now if i take the latest code form git should i build the docker image again
+1.Docker image is a SNAPSHOT of your code at build time
+# Your Dockerfile
+COPY . /app           # ← This copies your code INTO the image
+RUN pip install -r requirements.txt  # ← This installs dependencies INTO the image
+Once the image is built, it's frozen. Code changes after that are NOT inside the image.
+
+2.What happens when you pull latest code
+# You do this:
+git pull origin main
+# Your local files change ✅
+# But your Docker container is still running the OLD image ❌
+# The container doesn't know about your new code
+
+3.The Fix: Rebuild and Restart
+With Docker Compose (recommended):
+# One command does everything:
+docker-compose up -d --build
+# This:
+# 1. Rebuilds the image with your new code
+# 2. Stops the old container
+# 3. Starts a new container with new code
+
+With plain Docker:
+# Stop old container
+docker stop myapp
+
+# Remove old container
+docker rm myapp
+
+# Rebuild image with new code
+docker build -t myapp .
+
+# Run new container
+docker run -d -p 8000:8000 myapp
+
+Before git pull:
+┌─────────────────────┐
+│   Docker Image      │
+│  ┌───────────────┐  │
+│  │ Old Code      │  │
+│  │ (from last    │  │
+│  │  build)       │  │
+│  └───────────────┘  │
+└─────────────────────┘
+         │
+         ▼
+    Container running
+    OLD code
+
+After git pull (new code on disk):
+┌─────────────────────┐     ┌─────────────────┐
+│   Docker Image      │     │  Your Disk      │
+│  ┌───────────────┐  │     │ ┌─────────────┐ │
+│  │ OLD Code      │  │     │ │ NEW Code    │ │
+│  │ (still old!)  │  │     │ │ (git pull)  │ │
+│  └───────────────┘  │     │ └─────────────┘ │
+└─────────────────────┘     └─────────────────┘
+         │                           │
+         ▼                           │
+    Container running           NOT USED by
+    OLD code ❌                  container!
+
+After docker-compose up --build:
+┌─────────────────────┐
+│   NEW Docker Image  │
+│  ┌───────────────┐  │
+│  │ NEW Code      │  │
+│  │ (copied from  │  │
+│  │  your disk)   │  │
+│  └───────────────┘  │
+└─────────────────────┘
+         │
+         ▼
+    Container running
+    NEW code ✅
+
+
+The Development Shortcut: Mount your code as a volume
+To AVOID rebuilding on every code change during development:
+# docker-compose.yml
+services:
+  app:
+    build: .
+    volumes:
+      - .:/app      # ← Mounts your LOCAL code into container
+    # Now code changes appear instantly! No rebuild needed!
+
+With volume mount:
+git pull origin main
+docker-compose restart app  # ✅ No rebuild needed!
+But for production: Always rebuild the image (don't mount code)
+
+
+How Volume Mount Works
+Without volume (BAD for development):
+services:
+  app:
+    build: .
+    # NO volume mount
+Code change flow:
+1. You change app.py
+2. File changes on your computer ✅
+3. Container still has OLD code (copied during build) ❌
+4. Must rebuild: docker-compose up -d --build
+5. Wait for rebuild... (slow)
+
+With volume (GOOD for development):
+services:
+  app:
+    build: .
+    volumes:
+      - .:/app    # ← Mount current directory to /app in container
+Code change flow:
+1. You change app.py
+2. File changes on your computer ✅
+3. Container SEES the change immediately! (shared folder)
+4. No rebuild needed! 🎉
+5. Just restart: docker-compose restart
+   (or if using --reload flag, nothing at all!)
+
+
+Even Better: Auto-reload (No restart needed!)
+Add uvicorn with --reload flag:
+services:
+  app:
+    build: .
+    volumes:
+      - .:/app
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    #                                                    ^^^^^^^^
+
+Now:
+git pull origin main
+# Code changes automatically detected!
+# Uvicorn restarts itself!
+# No commands needed at all! 🚀
+
+Comparison Table
+Scenario	              Command after git pull	          Wait time
+No volume + no reload	  docker-compose up -d --build	    30-60 seconds
+Volume + no reload	    docker-compose restart	          2-3 seconds
+Volume + reload	        Nothing! Auto-detects	            0 seconds

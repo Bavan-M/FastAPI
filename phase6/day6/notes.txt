@@ -1,0 +1,42 @@
+Day 6 — OpenTelemetry + Mini Project
+Topic 1 — OpenTelemetry Basics → 01_opentelemetry_basics.py
+What is OpenTelemetry and why does it matter?
+In Phase 6 Day 1 you built structured logging. Logging tells you what happened. But in a production Gen AI system with multiple services, logging alone isn't enough:
+User reports: "My LLM request was slow"
+
+With only logs:
+→ Check app logs → found the request → it took 8 seconds → but WHY?
+→ Was it the DB query? The vector search? The OpenAI API call? The embedding?
+→ Can't tell — logs only show individual events, not the full journey
+
+With OpenTelemetry tracing:
+→ See the ENTIRE request as a timeline:
+   [0ms]    FastAPI received request
+   [2ms]    Auth token verified
+   [5ms]    DB query started
+   [45ms]   DB query completed (40ms)
+   [46ms]   Vector search started
+   [1200ms] Vector search completed (1154ms) ← HERE IS THE PROBLEM
+   [1202ms] OpenAI API call started
+   [3100ms] OpenAI API call completed (1898ms)
+   [3105ms] Response sent
+
+OpenTelemetry gives you three pillars of observability:
+Traces  → follow a request through every service (what we just described)
+Metrics → numerical measurements over time (requests/sec, error rate, p99 latency)
+Logs    → events with context (what you built in Day 1)
+
+All three share the same trace_id so you can jump between them.
+
+The mental model
+One user request = One Trace
+A Trace contains Spans
+Each Span = one unit of work (DB query, LLM call, auth check)
+
+Trace: abc-123
+  └── Span: handle_request (0-3105ms)
+        ├── Span: verify_auth (2-45ms)
+        ├── Span: db_query (5-45ms)
+        ├── Span: vector_search (46-1200ms)  ← slow!
+        └── Span: openai_call (1202-3100ms)
+

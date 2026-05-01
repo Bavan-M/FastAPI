@@ -1,0 +1,60 @@
+# docker-compose.dev.yml — Development overrides
+# Run with: docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+
+
+services:
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev    # use dev dockerfile
+    environment:
+      - ENV=development
+      - DEBUG=true
+      - LOG_LEVEL=DEBUG
+      - DATABASE_URL=postgresql+asyncpg://genai:devpassword@postgres:5432/genai_db
+      - REDIS_URL=redis://redis:6379
+      - MONGODB_URL=mongodb://mongo:27017
+      - SECRET_KEY=dev-secret-key-32-chars-minimum-abc
+      - REFRESH_SECRET_KEY=dev-refresh-key-32-chars-minimum-xyz
+
+    # Mount code — changes reflect instantly without rebuild
+    volumes:
+      - ./app:/app/app
+
+    # Expose directly — bypass Nginx in dev
+    ports:
+      - "8000:8000"
+
+    # Override command — run with hot reload
+    command: >
+      uvicorn app.main:app
+      --host 0.0.0.0
+      --port 8000
+      --reload
+      --reload-dir /app/app
+      --log-level debug
+
+  # Expose DB ports for local tools (DBeaver, TablePlus etc.)
+  postgres:
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_PASSWORD=devpassword
+
+  redis:
+    command: redis-server    # no password in dev
+    ports:
+      - "6379:6379"
+
+  mongo:
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_PASSWORD=devpassword
+
+  # Remove Nginx in dev — connect directly to app
+  nginx:
+    profiles:
+      - production-only    # only starts when profile is explicitly set
