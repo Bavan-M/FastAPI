@@ -1,0 +1,4 @@
+Day 2 — SAML with FastAPI
+What changes from Day 1?
+Day 1 was simulated to understand the flow. Day 2 uses python3-saml — the production library that handles XML signature verification, 
+certificate validation, and all the security-critical parts you must never implement yourself.

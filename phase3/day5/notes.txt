@@ -33,3 +33,29 @@ Your Gen AI app will have a frontend — and nobody wants to create yet another 
 8. Your API issues YOUR OWN JWT to the user
         ↓
 9. User is logged in — all future requests use YOUR JWT
+
+
+
+User clicks login in YOUR app
+        ↓
+Your backend: "Go to this Google URL"
+        ↓
+Browser → https://accounts.google.com/o/oauth2/auth?response_type=code&...
+        ↓
+Google SHOWS login page (not a code yet!)
+        ↓
+User logs in & approves
+        ↓
+Google SENDS code to YOUR redirect_uri:
+"Location: /auth/google/callback?code=XYZ123"
+        ↓
+Browser follows redirect to YOUR callback
+        ↓
+Your code gets: code = "XYZ123"  ← NOW you have the code!
+
+-> after i get the code https://oauth2.googleapis.com/token (GOOGLE_TOKEN_URL) takes this code 
+-> if it finds this code it gives token_data which contains access_token,expires_in,refresh_token,token_type,etc
+-> Now using this access_token we send this to https://www.googleapis.com/oauth2/v2/userinfo (GOOGLE_USERINFO_URL)
+-> We extract the user details like username,email,image,etc
+-> After getting the user details we find if the user is present in lor local DB
+-> if not found then we will create it and also we will create a access_token for api access using JWT

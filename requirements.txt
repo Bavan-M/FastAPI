@@ -35,3 +35,5 @@ opentelemetry-instrumentation-fastapi
 opentelemetry-instrumentation-httpx 
 opentelemetry-exporter-otlp 
 prometheus-fastapi-instrumentator
+python3-saml
+authlib

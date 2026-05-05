@@ -1,0 +1,64 @@
+Topic 1 — Microservice Principles → 01_microservice_principles.py
+What are microservices and when should you use them?
+A monolith is one big application where everything lives together. Microservices split that application into small independent services that each do one thing.
+Monolith (what you've built so far):
+┌─────────────────────────────────────┐
+│           FastAPI App               │
+│  Auth + Items + LLM + RAG +        │
+│  WebSocket + Notifications          │
+│  All in one process                 │
+└─────────────────────────────────────┘
+One process. One DB. One deployment.
+
+Microservices (what this phase teaches):
+┌──────────┐  ┌──────────┐  ┌──────────┐
+│   Auth   │  │   LLM    │  │   RAG    │
+│ Service  │  │ Gateway  │  │ Service  │
+└──────────┘  └──────────┘  └──────────┘
+┌──────────┐  ┌──────────┐
+│Ingestion │  │   API    │
+│ Service  │  │ Gateway  │
+└──────────┘  └──────────┘
+Each is an independent FastAPI app.
+Each has its own DB. Each deploys separately.
+
+When to split into microservices — the honest answer
+This is the most important decision in software architecture. Most teams split too early and regret it.
+Split when:
+→ Different scaling needs (LLM calls need 10x more resources than auth)
+→ Different deployment frequency (LLM model updates vs auth stays stable)
+→ Different teams own different parts (backend team vs ML team vs DevOps)
+→ One part failing shouldn't take down everything
+→ You've already built the monolith and know the boundaries
+
+Do NOT split when:
+→ Your team is < 5 engineers (coordination overhead kills you)
+→ You're still figuring out the domain (wrong boundaries = nightmare)
+→ No clear scaling difference between components
+→ You don't have Kubernetes/Docker expertise yet
+→ "Microservices are modern" is the only reason
+
+The golden rule
+Start as a monolith.
+Extract to microservices ONLY when you feel specific pain.
+Pain = deployment conflicts, scaling bottlenecks, team ownership issues.
+
+
+===========================================================================================================================
+
+Topic 3 — Inter-service JWT Auth → 03_inter_service_auth.py
+Why services need to authenticate each other
+When Service A calls Service B, Service B needs to know:
+
+Is this really Service A calling? (not an attacker who found the internal URL)
+Should Service A be allowed to call this endpoint?
+
+Without inter-service auth:
+Attacker finds internal URL: http://llm-service:8002/generate
+→ Makes direct calls bypassing API Gateway
+→ No rate limiting, no billing, no audit trail
+
+With inter-service auth:
+LLM Service checks: is this JWT signed by our service secret?
+→ Random attacker can't forge a valid service token
+→ Only known services can call each other
