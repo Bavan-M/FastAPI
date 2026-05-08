@@ -1,0 +1,119 @@
+version: "3.9"
+
+services:
+
+  # Message broker
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: phase8_rabbitmq
+    ports:
+      - "5672:5672"     # AMQP protocol
+      - "15672:15672"   # Management UI
+    environment:
+      - RABBITMQ_DEFAULT_USER=admin
+      - RABBITMQ_DEFAULT_PASS=admin123
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout:  5s
+      retries:  5
+
+  # Result backend
+  redis:
+    image: redis:7-alpine
+    container_name: phase8_redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout:  3s
+      retries:  5
+
+  # FastAPI application
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: phase8_api
+    ports:
+      - "8000:8000"
+    environment:
+      - CELERY_BROKER=amqp://admin:admin123@rabbitmq:5672//
+      - CELERY_BACKEND=redis://redis:6379/0
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: uvicorn phase8.day2.03_celery_fastapi:app --host 0.0.0.0 --port 8000
+
+  # Celery worker — ingestion queue
+  worker_ingestion:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: phase8_worker_ingestion
+    environment:
+      - CELERY_BROKER=amqp://admin:admin123@rabbitmq:5672//
+      - CELERY_BACKEND=redis://redis:6379/0
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: >
+      celery -A phase8.day2.02_celery_basics.celery_app
+      worker -Q ingestion --loglevel=info --concurrency=2
+
+  # Celery worker — LLM queue (can scale independently)
+  worker_llm:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: phase8_worker_llm
+    environment:
+      - CELERY_BROKER=amqp://admin:admin123@rabbitmq:5672//
+      - CELERY_BACKEND=redis://redis:6379/0
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: >
+      celery -A phase8.day2.02_celery_basics.celery_app
+      worker -Q llm,default --loglevel=info --concurrency=4
+
+  # Celery Beat — periodic tasks scheduler
+  beat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: phase8_beat
+    environment:
+      - CELERY_BROKER=amqp://admin:admin123@rabbitmq:5672//
+      - CELERY_BACKEND=redis://redis:6379/0
+    depends_on:
+      - rabbitmq
+      - redis
+    command: >
+      celery -A phase8.day2.package_02_celery_basics.celery_app
+      beat --loglevel=info
+
+  # Flower — Celery monitoring dashboard
+  flower:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: phase8_flower
+    ports:
+      - "5555:5555"
+    environment:
+      - CELERY_BROKER=amqp://admin:admin123@rabbitmq:5672//
+      - CELERY_BACKEND=redis://redis:6379/0
+    depends_on:
+      - rabbitmq
+      - redis
+    command: >
+      celery -A phase8.day2.package_02_celery_basics.celery_app
+      flower --port=5555

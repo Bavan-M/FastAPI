@@ -1,0 +1,241 @@
+Day 2 — Async Message Queues — RabbitMQ + Celery
+What is a message queue and why does it matter for microservices?
+In Day 1 you saw synchronous service communication — Service A calls Service B and waits for the response. This works for fast operations but breaks down for slow ones:
+
+Without message queue (sync):
+User uploads 100MB PDF
+→ API waits for chunking (30s) + embedding (20s) + storing (5s)
+→ User stares at loading spinner for 55 seconds
+→ If connection drops → everything lost
+→ If ingestion service crashes → user gets 500 error
+
+With message queue (async):
+User uploads 100MB PDF
+→ API puts "process this document" message in queue → returns INSTANTLY
+→ Worker picks up message → processes in background
+→ User sees "processing..." immediately
+→ If connection drops → message is safe in queue
+→ If worker crashes → message stays in queue → another worker picks it up
+=================================================================================================================
+The mental model
+Producer (FastAPI) → Queue (RabbitMQ) → Consumer (Celery Worker)
+
+Producer:  "Here's a job — do this whenever you can"
+Queue:     "Got it — I'll hold this safely until a worker is free"
+Consumer:  "I'm ready — give me the next job"
+
+Key properties:
+Durability:   Messages survive queue restarts
+Persistence:  Messages survive worker crashes
+Acknowledgment: Worker confirms completion before message is deleted
+Retry:        Failed messages go back to queue automatically
+==================================================================================================================
+RabbitMQ vs Celery — what's the difference?
+RabbitMQ:
+→ The message broker — stores and routes messages
+→ A server you run (like PostgreSQL for databases)
+→ Knows nothing about Python or your code
+→ Just receives, holds, and delivers messages
+
+Celery:
+→ Python task queue library
+→ Uses RabbitMQ (or Redis) as its broker
+→ Knows about Python functions — turns them into tasks
+→ Manages workers, retries, schedules
+→ The part you write Python code for
+
+Analogy:
+RabbitMQ = postal service (infrastructure)
+Celery    = the sender and recipient (your code)
+====================================================================================================================
+Setup — Start RabbitMQ with Docker
+docker run -d --name rabbitmq -p 5672:5672 -p 15672:15672 -e RABBITMQ_DEFAULT_USER=admin -e RABBITMQ_DEFAULT_PASS=admin123 rabbitmq:3-management
+✅ RabbitMQ with management plugin
+✅ Port 5672 → AMQP (app messaging)
+✅ Port 15672 → Web UI
+✅ User admin / pass admin123
+======================================================================================================================
+What each term does in this flow
+Term	    Role in this example	                                                Current value
+Connection	The open TCP pipe between each service and RabbitMQ	                    One per service (4 total)
+Channel	    Lightweight conversation inside each connection	                        Website uses 1, Payment uses 1, etc.
+Exchange	The router that directs "order.payment.process" to the right queues	    1 custom exchange + 7 built-in
+Queue	    Holding area for messages waiting to be processed	                    3 queues (payment, kitchen, sms)
+Binding	    The rule linking exchange to queue with a pattern	                    3 bindings
+Consumer	Services actively pulling messages from queues	                        3 consumers
+Producer	Services sending messages to exchanges	                                Website, Payment processor (both)
+==========================================================================================================================
+Note: Binding:"If a message has routing key X, put it in queue Y" => Each binding = One sticky note
+===========================================================================================================================
+The 7 exchanges:
+Exchange	            Routing Method	                Analogy
+(AMQP default)	        Queue name = routing key	    Mail slot labeled with your name
+amq.direct	            Exact match key	                Certified mail to specific department
+amq.fanout	            Ignores keys, sends to all	    Bullhorn announcement to entire building
+amq.topic	            Pattern matching (*, #)	        Mail sorting with wildcard addresses
+amq.headers	            Look inside message headers	    Opening envelope to check stamps
+amq.match	            Same as headers	                Duplicate (ignore)
+amq.rabbitmq.trace	    Internal debugging	            Security camera footage
+===============================================================================================================================
+
+Real Example Using Multiple Exchanges
+Order placed
+    ↓
+amq.topic → "order.new" → payment_queue, inventory_queue
+    ↓
+Payment approved
+    ↓
+amq.direct → "approved" → shipping_queue
+    ↓
+Inventory low
+    ↓
+amq.fanout → broadcast to: alert_queue, admin_queue, log_queue
+    ↓
+Debugging issue
+    ↓
+amq.rabbitmq.trace → capture ALL messages for inspection
+
+====================================================================================================================
+Topic 2 — Celery Basics → 02_celery_basics.py
+What is Celery and why does it sit on top of RabbitMQ?
+RabbitMQ is infrastructure — it knows nothing about Python. Celery is the Python layer that turns your regular functions into distributed tasks.
+
+RabbitMQ is the road system (infrastructure that moves messages), 
+while Celery is the Domino's Pizza delivery company (Python application that uses those roads to deliver tasks, track orders, 
+handle failures, and report results) — Celery sits on top of RabbitMQ because RabbitMQ provides reliable message transport, 
+and Celery provides the Python-friendly task management that makes distributed computing practical.
+
+Start RMQ and redis docker 
+docker run -d --name redis -p 6379:6379 redis:7-alpine
+
+=================================================================================================================
+Layer 1: RabbitMQ (Infrastructure)
+┌─────────────────────────────────────────────────────────────┐
+│                    RABBITMQ                                 │
+│                    (The Post Office)                        │
+│                                                             │
+│  "I am the actual message broker server."                   │
+│  "I run as a separate process (Docker container)."          │
+│  "I don't know anything about Python."                      │
+└─────────────────────────────────────────────────────────────┘
+
+Layer 2: Kombu (Python Messaging Library)
+┌─────────────────────────────────────────────────────────────┐
+│                    KOMBU                                    │
+│                    (The Delivery Trucks)                    │
+│                                                             │
+│  "I know how to TALK to RabbitMQ from Python."              │
+│  "I handle connections, channels, exchanges, queues."       │
+│  "But I don't know what a 'task' is."                       │
+│  "I just send and receive raw messages."                    │
+└─────────────────────────────────────────────────────────────┘
+
+Layer 3: Celery (Task Management)
+┌─────────────────────────────────────────────────────────────┐
+│                    CELERY                                   │
+│                    (The Delivery Manager)                   │
+│                                                             │
+│  "I use Kombu to send/receive messages."                    │
+│  "But I add TASK concepts: retries, results, scheduling."   │
+│  "I know what a 'reboot_server' function is."               │
+│  "I speak Python, not just raw messages."                   │
+└─────────────────────────────────────────────────────────────┘
+
+==========================================================================================================================================
+Kombu Concepts
+1.Connection
+Connection('amqp://admin:admin123@localhost:5672//')
+In pizza story: The phone line connecting your restaurant to the post office.
+┌──────────────┐     ┌─────────────────┐
+│ Your Kitchen │────▶│  Phone Line     │
+│ (Python)     │     │  (Connection)   │
+└──────────────┘     └─────────────────┘
+                              │
+                              ▼
+                      ┌───────────────┐
+                      │  Post Office  │
+                      │  (RabbitMQ)   │
+                      └───────────────┘
+
+2.Exchange
+Exchange('tasks', type='direct')
+In pizza story: The sorting table at the post office.
+┌─────────────────────────────────────────────────────────────┐
+│                    SORTING TABLE (Exchange)                 │
+│                                                             │
+│  Rules (bindings):                                          │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │ "critical" routing key → Critical queue             │    │
+│  │ "default" routing key → Default queue               │    │
+│  │ "llm" routing key → LLM queue                       │    │
+│  └─────────────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────────────┘
+
+3.Queue
+Queue('default', exchange, routing_key='default')
+In pizza story: The waiting shelf for a specific type of order.
+
+4.ConsumerMixin
+class MyWorker(ConsumerMixin):
+    """Robust consumer with built-in error handling."""
+In pizza story: A self-managing chef robot that:
+Connects to the queue automatically
+Reconnects if connection drops
+Handles errors gracefully
+Restarts if crashes
+
+
+┌─────────────────────────────────────────────────────────────┐
+│                    YOUR PYTHON CODE                         │
+│                                                             │
+│  @app.task                                                  │
+│  def reboot_server():                                       │
+│      return "rebooted"                                      │
+└─────────────────────────┬───────────────────────────────────┘
+                          │
+                          │ Uses
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    CELERY                                   │
+│                                                             │
+│  Task: reboot_server                                        │
+│  Result: "rebooted"                                         │
+│  Retries: 3                                                 │
+│  Schedule: every hour                                       │
+└─────────────────────────┬───────────────────────────────────┘
+                          │
+                          │ Built on top of
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    KOMBU                                    │
+│                                                             │
+│  Connection: amqp://admin:admin123@localhost:5672           │
+│  Exchange: tasks (direct)                                   │
+│  Queue: default                                             │
+│  Producer: send raw messages                                │
+│  Consumer: receive raw messages                             │
+└─────────────────────────┬───────────────────────────────────┘
+                          │
+                          │ Talks to
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    RABBITMQ                                 │
+│                                                             │
+│  Actual message broker (Docker container)                   │
+│  Port 5672: AMQP protocol                                   │
+│  Port 15672: Management UI                                  │
+└─────────────────────────────────────────────────────────────┘
+==================================================================================================================================================================
+Topic 3 — Celery + FastAPI Integration → 03_celery_fastapi.py
+The core pattern
+FastAPI handles HTTP requests and dispatches work to Celery. The client gets an immediate response with a task_id, then polls for results.
+Client → POST /documents/upload
+         ↓
+FastAPI validates + saves file
+FastAPI → celery_app.delay() → RabbitMQ queue
+FastAPI → returns {"task_id": "abc-123", "status": "processing"}
+
+Client → GET /tasks/abc-123 (polls every 2 seconds)
+         ↓ status: "processing" (still in queue)
+         ↓ status: "processing" (worker picked it up)
+         ↓ status: "success" (done!)

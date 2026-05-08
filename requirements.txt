@@ -37,3 +37,8 @@ opentelemetry-exporter-otlp
 prometheus-fastapi-instrumentator
 python3-saml
 authlib
+celery[rabbitmq] 
+aio-pika 
+pika 
+kombu 
+flower
